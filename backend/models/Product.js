@@ -20,12 +20,7 @@ const productSchema = new Schema({
     required: true,
   },
   design: {
-    frontImage: {
-      type: String,
-    },
-    backImage: {
-      type: String,
-    },
+   type: String,
   },
   colors: {
     type: [String],
@@ -34,14 +29,7 @@ const productSchema = new Schema({
   sizes: {
     type: [String],
     default: [],
-  },
-  sampleImage: {
-    type: String, //URL
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  }
 });
 
 mongoose.model("products", productSchema);

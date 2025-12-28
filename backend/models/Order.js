@@ -7,35 +7,11 @@ const orderSchema = new Schema({
     required: true,
     unique: true,
   },
-  customerId: {
+  cartId: {
     type: Schema.Types.ObjectId,
-    ref: "users",
+    ref: "cart",
     required: true,
   },
-  artistId: {
-    type: Schema.Types.ObjectId,
-    ref: "artists",
-    required: true,
-  },
-  items: [
-    {
-      productId: {
-        type: Schema.Types.ObjectId,
-        ref: "products",
-        required: true,
-      },
-      productName: { type: String },
-      category: { type: String },
-      color: { type: String },
-      size: { type: String },
-      quantity: {
-        type: Number,
-        default: 1,
-      },
-      price: { type: Number },
-      sampleImage: String,
-    },
-  ],
   shippingAddress: {
     name: { type: String },
     phone: { type: Number },
@@ -43,10 +19,6 @@ const orderSchema = new Schema({
     city: { type: String },
     state: { type: String },
     pincode: { type: Number },
-  },
-  total: {
-    type: Number,
-    required: true,
   },
   orderStatus: {
     type: String,
@@ -68,11 +40,7 @@ const orderSchema = new Schema({
   paymentMethod: {
     type: String,
     enum: ["upi", "card", "cod"],
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  }
 });
 
 mongoose.model("orders", orderSchema);

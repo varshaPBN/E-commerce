@@ -15,8 +15,6 @@ const cartSchema = new Schema({
         ref: "products",
         required: "true",
       },
-      productName: { type: String, required: true },
-      artistName: { type: String, required: true },
       color: { type: String },
       size: { type: String },
       quantity: {
@@ -25,7 +23,6 @@ const cartSchema = new Schema({
         default: 1,
       },
       price: { type: Number, required: true },
-      sampleImage: String,
       addedAt: {
         type: Date,
         default: Date.now,
