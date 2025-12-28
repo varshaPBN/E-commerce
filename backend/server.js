@@ -17,6 +17,15 @@ mongoose
     console.log("Error connecting to MongoDB", err);
   });
 
+
+// Models
+
+require("./models/user")
+
+// Routes
+
+require("./routes/authRoutes")(app)
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });  
