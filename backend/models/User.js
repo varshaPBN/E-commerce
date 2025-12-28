@@ -6,6 +6,9 @@ const userSchema = new Schema({
     type: String,
     required: true 
   },
+  otp: {
+    type: String
+  }
 });
 
 mongoose.model("users", userSchema);

@@ -20,11 +20,17 @@ mongoose
 
 // Models
 
-require("./models/user")
+require("./models/User")
+require("./models/Product")
+require("./models/Cart")
+require("./models/Order")
+require("./models/Artist")
+
 
 // Routes
-
+require("./routes/cartRoutes")(app)
 require("./routes/authRoutes")(app)
+require("./routes/userLoginRoutes")(app)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
