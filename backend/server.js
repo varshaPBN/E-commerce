@@ -19,11 +19,17 @@ mongoose
 
 
 // Models
+
 require("./models/User")
+require("./models/Product")
+require("./models/Cart")
+require("./models/Order") 
 require("./models/Artist")
 
+
 // Routes
-require("./routes/authRoutes")(app)
+require("./routes/cartRoutes")(app)
+require("./routes/userRoutes")(app)
 require("./routes/artistRoutes")(app)
 
 app.listen(port, () => {
