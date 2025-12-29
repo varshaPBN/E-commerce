@@ -5,17 +5,18 @@ const artistSchema = new Schema({
   email:{
     type: String,
     required: true,
+    unique: true,
   },
   otp:{
     type: String,
   },
-  artistName: { 
+  name: { 
     type: String, 
-    required: true
+    // required: true
   },
   storeName: {
     type: String,
-    required: true 
+    // required: true 
   },
   domain: {
     type: String 
@@ -23,11 +24,16 @@ const artistSchema = new Schema({
   logo: { 
     type: String 
   }, //URL
-  avatarImg: {
+  avathar: {
     type: String 
   },
   isEmailVerified:{
-    type: Boolean
+    type: Boolean,
+    default: false
+  },
+  username: {
+    type: String,
+    // unique: true
   }
 });
 

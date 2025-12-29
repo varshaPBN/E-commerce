@@ -19,12 +19,12 @@ mongoose
 
 
 // Models
-
-require("./models/user")
+require("./models/User")
+require("./models/Artist")
 
 // Routes
-
 require("./routes/authRoutes")(app)
+require("./routes/artistRoutes")(app)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
