@@ -29,7 +29,6 @@ require("./models/Artist")
 
 // Routes
 require("./routes/cartRoutes")(app)
-require("./routes/authRoutes")(app)
 require("./routes/userRoutes")(app)
 
 app.listen(port, () => {
