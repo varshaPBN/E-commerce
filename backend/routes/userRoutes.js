@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const otpLength = 6;
 
 module.exports = (app) => {
+  // User Login via email and send OTP
   app.post("/api/v1/user/login", async (req, res) => {
     try {
       const { email } = req.body;
@@ -29,6 +30,7 @@ module.exports = (app) => {
     }
   });
 
+  // Verify OTP for login
   app.post("/api/v1/user/verify-otp", async (req, res) => {
     try {
       const { email, otp } = req.body;
