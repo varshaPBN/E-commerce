@@ -70,15 +70,12 @@ app.post("/api/v1/artist/signup/otp", async (req, res) => {
 
 app.post("/api/v1/artist/signup/profile",async (req,res)=>{
   const { email, name, storeName, domain, logo, avathar } = req.body;
-
-  const username = storeName.toLowerCase().replace(/\s+/g, "") + Math.floor(Math.random() * 1000);
   try{
     const response = await Artists.updateOne(
       {email},
       {
         $set : {
         name,
-        username,
         storeName,
         domain,
         logo,
@@ -93,33 +90,52 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
   }
 })
 
-  app.post("/api/v1/artist/login", async (req,res) =>{
-    const { identifier } = req.body;
-    const isEmail = identifier.includes("@");
-    if(isEmail){
-      const artist = await Artists.findOne({ email: identifier});
-      if(!artist){
-        res.status(400).json({ message: "Artist not found ", response });
+  app.post("/api/v1/artist/login", async (req, res) => {
+      try {
+        const { email } = req.body;
+  
+        const digits = "0123456789";
+        let newOTP = "";
+        for (let i = 0; i < otpLength; i++) {
+          newOTP += digits[Math.floor(Math.random() * 10)];
+        }
+        console.log("newOTP: ", newOTP);
+  
+        const user = await Artists.findOne({ email });
+        if (!user) {
+          res.status(404).json({ message: "User not found" });
+        } else {
+          const response = await Artists.updateOne({ email }, { otp: newOTP });
+          res.status(201).json({ message: "OTP Sent Successfully", response });
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: error.message });
       }
-      const digits = "0123456789";
-      let newOTP = "";
-      for (let i = 0; i < otpLength; i++) {
-        newOTP += digits[Math.floor(Math.random() * 10)];
+    });
+  
+    // Verify OTP for login
+    app.post("/api/v1/artist/verify-otp", async (req, res) => {
+      try {
+        const { email, otp } = req.body;
+  
+        const user = await Artists.findOne({ email });
+  
+        if (user && user.otp === otp) {
+          const payload = {
+            id: user._id,
+            email: user.email,
+          };
+  
+          const token = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRES_IN,
+          });
+  
+          res.status(200).json({ message: "Login Success", token });
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: error.message });
       }
-      console.log("newOTP: ", newOTP);
-      const response = await Artists.updateOne({ email : identifier, otp: newOTP });
-      res.status(201).json({ message: "Login - OTP Sent Successfully", response });
-    } else {
-      const artist = await Artists.findOne({ username: identifier });
-      if (!artist) {
-      return res.status(404).json({ message: "Invalid username" });
-      }
-      const token = jwt.sign(
-      { id: artist._id, email: artist.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
-      );
-      res.status(200).json({ message: "Login successful", token });
-    }
     });
 }

@@ -30,10 +30,6 @@ const artistSchema = new Schema({
   isEmailVerified:{
     type: Boolean,
     default: false
-  },
-  username: {
-    type: String,
-    // unique: true
   }
 });
 
