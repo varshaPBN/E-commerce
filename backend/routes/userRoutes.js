@@ -31,7 +31,7 @@ module.exports = (app) => {
   });
 
   // Verify OTP for login
-  app.post("/api/v1/user/verify-otp", async (req, res) => {
+  app.post("/api/v1/user/verify/otp", async (req, res) => {
     try {
       const { email, otp } = req.body;
 
@@ -39,7 +39,7 @@ module.exports = (app) => {
 
       if (user && user.otp === otp) {
         const payload = {
-          id: user._id,
+          id: user._id.toString(),
           email: user.email,
         };
 
