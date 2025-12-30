@@ -90,6 +90,7 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
   }
 })
 
+  //Login using otp
   app.post("/api/v1/artist/login", async (req, res) => {
       try {
         const { email } = req.body;
