@@ -92,4 +92,34 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
     res.status(500).json({ message: error.message });
   }
 })
-};
+
+  app.post("/api/v1/artist/login", async (req,res) =>{
+    const { identifier } = req.body;
+    const isEmail = identifier.includes("@");
+    if(isEmail){
+      const artist = await Artists.findOne({ email: identifier});
+      if(!artist){
+        res.status(400).json({ message: "Artist not found ", response });
+      }
+      const digits = "0123456789";
+      let newOTP = "";
+      for (let i = 0; i < otpLength; i++) {
+        newOTP += digits[Math.floor(Math.random() * 10)];
+      }
+      console.log("newOTP: ", newOTP);
+      const response = await Artists.updateOne({ email : identifier, otp: newOTP });
+      res.status(201).json({ message: "Login - OTP Sent Successfully", response });
+    } else {
+      const artist = await Artists.findOne({ username: identifier });
+      if (!artist) {
+      return res.status(404).json({ message: "Invalid username" });
+      }
+      const token = jwt.sign(
+      { id: artist._id, email: artist.email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+      );
+      res.status(200).json({ message: "Login successful", token });
+    }
+    });
+}
