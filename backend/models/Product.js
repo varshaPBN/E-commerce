@@ -11,6 +11,9 @@ const productSchema = new Schema({
     type: String,
     required: true,
   },
+  description: {
+    type: String
+  },
   category: {
     type: String,
     required: true,
@@ -18,6 +21,9 @@ const productSchema = new Schema({
   price: {
     type: Number,
     required: true,
+  },
+  actualPrice: {
+    type: Number,
   },
   design: {
    type: String,

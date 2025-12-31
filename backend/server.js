@@ -31,6 +31,7 @@ require("./models/Artist")
 require("./routes/cartRoutes")(app)
 require("./routes/userRoutes")(app)
 require("./routes/artistRoutes")(app)
+require("./routes/productRoutes")(app)
 require("./routes/orderRoutes")(app)
 
 app.listen(port, () => {
