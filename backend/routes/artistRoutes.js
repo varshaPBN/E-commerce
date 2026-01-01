@@ -34,13 +34,12 @@ module.exports = (app) => {
 
 
 app.post("/api/v1/artist/signup/otp", async (req, res) => {
-    console.log("Verify OTP 1");
     try {
       const { email, otp } = req.body;
-      console.log("Verify OTP 2", email, otp);
+      console.log(email, otp);
 
       const artist = await Artists.findOne({ email });
-      console.log("Verify OTP 3", artist);
+      console.log(artist);
 
       if (artist && artist.otp === otp) {
         await Artists.updateOne(
@@ -52,15 +51,12 @@ app.post("/api/v1/artist/signup/otp", async (req, res) => {
           id: artist._id,
           email: artist.email,
         };
-        console.log("Verify OTP 4");
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
           expiresIn: process.env.JWT_EXPIRES_IN,
         });
-        console.log("Verify OTP 5");
 
         res.status(200).json({ message: "SignUp Success", token });
-        console.log("Verify OTP 6");
       }
     } catch (error) {
       console.log(error);
@@ -69,7 +65,7 @@ app.post("/api/v1/artist/signup/otp", async (req, res) => {
   });
 
 app.post("/api/v1/artist/signup/profile",async (req,res)=>{
-  const { email, name, storeName, domain, logo, avathar } = req.body;
+  const { email, name, storeName, domain, logo, avatar } = req.body;
   try{
     const response = await Artists.updateOne(
       {email},
@@ -79,7 +75,7 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
         storeName,
         domain,
         logo,
-        avathar
+        avatar
         }
       }
     );

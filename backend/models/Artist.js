@@ -24,7 +24,7 @@ const artistSchema = new Schema({
   logo: { 
     type: String 
   }, //URL
-  avathar: {
+  avatar: {
     type: String 
   },
   isEmailVerified:{
