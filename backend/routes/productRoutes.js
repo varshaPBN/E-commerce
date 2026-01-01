@@ -4,7 +4,7 @@ const Products = mongoose.model("products")
 
 
 module.exports = (app) => {
-  //product creation
+    //product creation
     app.post("/api/v1/artist/products/create", userAuth, async (req, res) => {
     try {
       const {
@@ -42,6 +42,7 @@ module.exports = (app) => {
     }
   });
 
+  //product view
    app.get("/api/v1/artist/products/view", userAuth, async (req, res) => {
     console.log("Logged in artist id:", req.user.id);
     try {
@@ -58,9 +59,9 @@ module.exports = (app) => {
     res.status(500).json({ message: error.message });
     }
 });
-
-    app.post("/api/v1/products/delete/:productId", userAuth , async (req, res) => {
-    try {
+  //product delete
+    app.delete("/api/v1/products/:productId", requireLogin, async (req, res) => {
+  try {
     const { productId } = req.params;
 
     const product = await Products.findOne({
@@ -69,17 +70,39 @@ module.exports = (app) => {
     });
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({
+        message: "Product not found or unauthorized"
+      });
     }
 
     await Products.deleteOne({ _id: productId });
 
-    res.status(200).json({ message: "Product deleted successfully" });
+    res.status(200).json({
+      message: "Product deleted successfully"
+    });
 
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });
   }
-  });
+});
+
+  //product updation
+  app.put("/api/v1/products/:productId", requireLogin, async (req, res) => {
+  try {
+    const updated = await Products.updateOne(
+      { _id: req.params.productId, artistId: req.user.id },
+      req.body
+    );
+
+    res.status(200).json({
+      message: "Product updated successfully",
+      updated
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 };
