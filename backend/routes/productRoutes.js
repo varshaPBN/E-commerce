@@ -60,7 +60,7 @@ module.exports = (app) => {
     }
 });
   //product delete
-    app.delete("/api/v1/products/:productId", requireLogin, async (req, res) => {
+    app.delete("/api/v1/artist/products/:productId", userAuth, async (req, res) => {
   try {
     const { productId } = req.params;
 
@@ -88,7 +88,7 @@ module.exports = (app) => {
 });
 
   //product updation
-  app.put("/api/v1/products/:productId", requireLogin, async (req, res) => {
+  app.put("/api/v1/artist/products/:productId", userAuth, async (req, res) => {
   try {
     const updated = await Products.updateOne(
       { _id: req.params.productId, artistId: req.user.id },
