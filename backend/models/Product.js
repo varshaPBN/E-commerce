@@ -15,8 +15,9 @@ const productSchema = new Schema({
     type: String
   },
   category: {
-    type: String,
-    required: true,
+  type: String,
+  enum: ["Tshirt", "Hat", "Mug", "Bag"],
+  required: true
   },
   price: {
     type: Number,
@@ -30,10 +31,12 @@ const productSchema = new Schema({
   },
   colors: {
     type: [String],
+    enum: ["Black", "White", "Red", "Blue", "Green"],
     default: [],
   },
   sizes: {
     type: [String],
+    enum: ["XS", "S", "M", "L", "XL", "XXL"],
     default: [],
   }
 });
