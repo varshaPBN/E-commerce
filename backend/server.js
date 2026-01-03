@@ -25,6 +25,7 @@ require("./models/Product")
 require("./models/Cart")
 require("./models/Order") 
 require("./models/Artist")
+require("./models/Admin")
 
 
 // Routes
@@ -33,6 +34,7 @@ require("./routes/userRoutes")(app)
 require("./routes/artistRoutes")(app)
 require("./routes/productRoutes")(app)
 require("./routes/orderRoutes")(app)
+require("./routes/adminRoutes")(app)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
