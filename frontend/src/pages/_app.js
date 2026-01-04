@@ -1,5 +1,6 @@
+import "@/styles/globals.css";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import theme from "../styles/mui/theme";
+import theme from "@/theme/theme";
 
 export default function App({ Component, pageProps }) {
   return (
