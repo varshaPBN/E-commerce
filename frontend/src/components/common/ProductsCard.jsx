@@ -19,6 +19,9 @@ export default function ProductsCard({
         transition: "transform 0.2s",
         boxShadow: "2px 4px 4px rgba(0, 0, 0, 0.25)",
         "&:hover": { transform: "translateY(-4px)" },
+        height: "100%",
+        display: "flex",
+        flexDirection: "column"
       }}
     >
       <Box
@@ -31,54 +34,58 @@ export default function ProductsCard({
           objectFit: "cover",
         }}
       />
-      <CardContent sx={{ p: 2.5 }}>
+      <CardContent sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection:"column" }}>
         <Typography sx={{ fontSize: "20px", fontWeight: 700, mb: 1 }}>
           {title}
         </Typography>
-        <Typography
-          sx={{
-            fontSize: "14px",
-            color: "#666",
-            mb: 2,
-            minHeight: 60,
-            lineHeight: 1.5,
-          }}
-        >
-          {description}
-        </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography sx={{ fontSize: "24px", fontWeight: 700 }}>
-            {price}
+        {description && (
+          <Typography
+            sx={{
+              fontSize: "14px",
+              color: "#666",
+              mb: 2,
+              lineHeight: 1.5,
+            }}
+          >
+            {description}
           </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <IconButton
-              size="small"
-              sx={{ width: 32, height: 32 }}
-              onClick={() => toggleHeart(index)}
-            >
-              <Box
-                component="img"
-                src={
-                  isLiked[index] ? "/icons/HeartRed.png" : "/icons/Heart.png"
-                }
-                sx={{ width: 24, height: 24 }}
-              />
-            </IconButton>
-            <IconButton size="small" sx={{ width: 32, height: 32 }}>
-              <Box
-                component="img"
-                src="/icons/Bag.png"
-                sx={{ width: 24, height: 24 }}
-              />
-            </IconButton>
+        )}
+        {price && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: "auto"
+            }}
+          >
+            <Typography sx={{ fontSize: "24px", fontWeight: 700 }}>
+              {price}
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <IconButton
+                size="small"
+                sx={{ width: 32, height: 32 }}
+                onClick={() => toggleHeart(index)}
+              >
+                <Box
+                  component="img"
+                  src={
+                    isLiked[index] ? "/icons/HeartRed.png" : "/icons/Heart.png"
+                  }
+                  sx={{ width: 24, height: 24 }}
+                />
+              </IconButton>
+              <IconButton size="small" sx={{ width: 32, height: 32 }}>
+                <Box
+                  component="img"
+                  src="/icons/Bag.png"
+                  sx={{ width: 24, height: 24 }}
+                />
+              </IconButton>
+            </Box>
           </Box>
-        </Box>
+        )}
       </CardContent>
     </Card>
   );

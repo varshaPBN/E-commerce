@@ -6,28 +6,15 @@ import {
   Typography,
   Button,
   IconButton,
-  TextField,
   Select,
   MenuItem,
   FormControl,
   Chip,
-  Card,
-  CardContent,
   Avatar,
   Rating,
-  LinearProgress,
-  InputAdornment,
-  Grid,
   Paper,
-  styled,
 } from "@mui/material";
 import {
-  Search,
-  Notifications,
-  ShoppingCart,
-  ArrowBack,
-  FavoriteBorder,
-  ShoppingBag,
   ArrowForward,
 } from "@mui/icons-material";
 import ProductsHeader from "@/components/common/ProductsHeader";
