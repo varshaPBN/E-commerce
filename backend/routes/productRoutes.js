@@ -105,4 +105,43 @@ module.exports = (app) => {
   }
 });
 
+  // User – view all products of an artist (public)
+app.get("/api/v1/:artistId/products", async (req, res) => {
+  try {
+    const { artistId } = req.params;
+
+    const products = await Products.find({ artistId });
+
+    res.status(200).json({
+      message: "Artist products fetched successfully",
+      products
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+  // User – view single product details (public)
+app.get("/api/v1/user/products/:productId", async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    const product = await Products.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json({
+      message: "Product details fetched successfully",
+      product
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 };
