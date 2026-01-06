@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express"); // npm i express
 const mongoose = require("mongoose"); //npm i mongoose
 require("dotenv").config(); // Load environment variables. Make sure .env is in .gitignore
@@ -31,6 +32,11 @@ require("./models/Artist")
 require("./routes/cartRoutes")(app)
 require("./routes/userRoutes")(app)
 require("./routes/artistRoutes")(app)
+require("./routes/authRoutes")(app)
+
+
+
+console.log("EMAIL:", process.env.EMAIL_USER); //for otp testing
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
