@@ -12,7 +12,7 @@ const sendOtpMail = async (to, otp) => {
   await transporter.sendMail({
     from: `"OTP FROM ARTLOOM" <${process.env.EMAIL_USER}>`,
     to,
-    subject: "Your OTP Code",
+    subject: "Your OTP Code for  login is ",
     html: `
       <h2>Email Verification</h2>
       <h1>${otp}</h1>
