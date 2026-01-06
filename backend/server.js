@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express"); // npm i express
 const mongoose = require("mongoose"); //npm i mongoose
 require("dotenv").config(); // Load environment variables. Make sure .env is in .gitignore
