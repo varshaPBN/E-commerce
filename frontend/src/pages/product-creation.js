@@ -24,15 +24,16 @@ export default function ProductCreation() {
         <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 }, py: 4 }}>
           <Grid container spacing={3}>
             {/* Left Panel - Product Details */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={15}>
               <ProductDetailsPanel />
             </Grid>
 
             {/* Right Panel - Product Preview */}
-              <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={9} sx={{ml:"auto", transform: "translateX(-24px)"}}>
               <ProductPreviewPanel />
             </Grid>
           </Grid>
+
         </Container>
       </Box>
     </>
