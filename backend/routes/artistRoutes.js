@@ -117,6 +117,10 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
         const { email, otp } = req.body;
   
         const user = await Artists.findOne({ email });
+
+        if (!user) {
+        return res.status(404).json({ message: "User not found" });
+        }
   
         if (user && user.otp === otp) {
           const payload = {
@@ -127,8 +131,12 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
           const token = jwt.sign(payload, process.env.JWT_SECRET, {
             expiresIn: process.env.JWT_EXPIRES_IN,
           });
-  
+          
+          await Artists.updateOne({ email }, { otp: null });
+
           res.status(200).json({ message: "Login Success", token });
+        }else{
+            return res.status(400).json({ message: "Invalid OTP" });
         }
       } catch (error) {
         console.log(error);
