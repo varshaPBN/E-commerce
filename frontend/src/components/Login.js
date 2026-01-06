@@ -122,7 +122,7 @@ export default function Login() {
             ← Back
           </Typography>
 
-          <Chip
+          {/* <Chip
             icon={<LockOutlinedIcon fontSize="small" />}
             label="Secure access · Magic link sent"
             sx={{
@@ -131,7 +131,7 @@ export default function Login() {
               mb: 3,
               borderRadius: 2,
             }}
-          />
+          /> */}
 
           <Card sx={{ width: 300, mx: "auto", borderRadius: 4 }}>
             <Box sx={{ position: "relative" }}>
@@ -177,7 +177,7 @@ export default function Login() {
 
         {/* RIGHT PANEL */}
         <Box sx={{ width: "55%", p: 6 }}>
-          <Typography variant="h4" fontWeight={600} mb={1}>
+          <Typography variant="h4" fontWeight={600} mb={1} >
             Artist Login
           </Typography>
 

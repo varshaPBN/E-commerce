@@ -166,7 +166,7 @@ export default function UserLogin() {
         </Box>
       </Box>
 
-      {/* ✅ OTP MODAL */}
+      {/* OTP MODAL */}
       <OtpModal
         open={otpOpen}
         onClose={handleCloseOtp}
