@@ -1,6 +1,8 @@
 const mongoose = require("mongoose")
 const Artists = mongoose.model("artists")
 const jwt = require("jsonwebtoken");
+const sendOtpMail = require("../utils/mailer"); //otp
+const otpStore = new Map();
 
 const otpLength = 6;
 
@@ -17,7 +19,9 @@ module.exports = (app) => {
       }
       
       console.log("newOTP: ", newOTP);
+      await sendOtpMail(email, newOTP); //otp
       const artist = await Artists.findOne({ email });
+      
 
        if (!artist) {
         const response = await Artists.create({ email, otp: newOTP });
@@ -26,6 +30,7 @@ module.exports = (app) => {
         const response = await Artists.updateOne({ email }, { otp: newOTP });
         res.status(201).json({ message: "OTP Sent Successfully", response });
       }
+      
     } catch (error) {
       console.log(error);
       res.status(500).send({ message: error.message });

@@ -19,6 +19,7 @@ import ProductsHeader from "@/components/common/ProductsHeader";
 
 export default function ProductPage() {
   const [likedProducts, setLikedProducts] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const router = useRouter();
 
   const toggleLike = (title) => {
@@ -27,6 +28,14 @@ export default function ProductPage() {
       [title]: !prev[title],
     }));
   };
+
+  // ✅ FILTER LOGIC
+  const filteredProducts =
+    selectedCategory === "All"
+      ? products
+      : products.filter(
+          (product) => product.category === selectedCategory
+        );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -68,25 +77,29 @@ export default function ProductPage() {
             </Typography>
 
             {[
+              "All",
               "Clothing",
               "Posters & Prints",
               "Accessories",
               "Home & Living",
               "Limited Editions",
             ].map((item) => (
-              <Box key={item} sx={{ display: "flex", alignItems: "center" }}>
-                <Checkbox size="small" />
+              <Box
+                key={item}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+                onClick={() => setSelectedCategory(item)}
+              >
+                <Checkbox
+                  size="small"
+                  checked={selectedCategory === item}
+                />
                 <Typography fontSize={14}>{item}</Typography>
               </Box>
             ))}
-
-            <Typography
-              fontSize={13}
-              color="primary.dark"
-              sx={{ mt: 1, cursor: "pointer" }}
-            >
-              Show more
-            </Typography>
           </Box>
 
           {/* ========== PRODUCT GRID ========== */}
@@ -98,7 +111,7 @@ export default function ProductPage() {
               gap: 3,
             }}
           >
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <Card
                 key={product.title}
                 onClick={() => router.push("/user-login")}
@@ -124,7 +137,7 @@ export default function ProductPage() {
                 {/* LIKE BUTTON */}
                 <IconButton
                   onClick={(e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     toggleLike(product.title);
                   }}
                   sx={{
@@ -173,47 +186,55 @@ const products = [
     desc: "A fashionable t-shirt with anime print",
     price: 299,
     image: "/Naruto.png",
+    category: "Clothing",
   },
   {
     title: "Custom embroidered hat",
     desc: "Custom embroidered hat made for you",
     price: 149,
     image: "/cap.png",
+    category: "Accessories",
   },
   {
     title: "Sunflower Soul Denim Jacket",
     desc: "A denim jacket with sunflower design",
     price: 500,
     image: "/jacket.png",
+    category: "Clothing",
   },
   {
     title: "Pure-fect Cat Graphic T-shirt",
     desc: "Fun cat graphic t-shirt",
     price: 149,
     image: "/tshirt.png",
+    category: "Clothing",
   },
   {
     title: "Best Friends Forever Personalized Mug",
     desc: "Custom mug for best friends",
     price: 299,
     image: "/p5.png",
+    category: "Home & Living",
   },
   {
     title: "Creator Edition Streetwear Hoodie",
     desc: "Premium hoodie for creators",
     price: 699,
     image: "/p6.png",
+    category: "Clothing",
   },
   {
     title: "Abstract Coffee Art Print",
     desc: "Abstract art for coffee lovers",
     price: 199,
     image: "/p7.png",
+    category: "Posters & Prints",
   },
   {
     title: "Capture the Moment T-shirt",
     desc: "Minimal typography t-shirt",
     price: 299,
     image: "/p8.png",
+    category: "Clothing",
   },
 ];
