@@ -7,7 +7,15 @@ module.exports = (app) => {
   // Get all items in cart of user
   app.get("/api/v1/get/cart/", userAuth, async (req, res) => {
     try {
-      const cart = await Cart.findOne({ userId: req.user.id });
+      const cart = await Cart.findOne({ userId: req.user.id })
+        .populate({
+          path: "items.productId",
+          select: "name price design artistId",
+          populate: {
+            path: "artistId",
+            select: "name storeName",
+          },
+        });
 
       if (!cart) {
         return res.status(404).json({ message: "Cart is empty", cart: null });

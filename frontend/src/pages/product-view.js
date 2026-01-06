@@ -1,5 +1,5 @@
 // pages/product.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -14,31 +14,94 @@ import {
   Rating,
   Paper,
 } from "@mui/material";
-import {
-  ArrowForward,
-} from "@mui/icons-material";
+import { ArrowForward } from "@mui/icons-material";
 import ProductsHeader from "@/components/common/ProductsHeader";
 import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
+import axios from "axios";
+import { useSearchParams } from "next/navigation";
 
 export default function ProductView() {
-  const [size, setSize] = useState("S");
-  const [color, setColor] = useState("red");
+  const productId = useSearchParams().get("productId");
+
+  const [product, setProduct] = useState({});
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [size, setSize] = useState("None");
+  const [color, setColor] = useState("None");
   const [isLiked, setLiked] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [deliveryDate, setDeliveryDate] = useState("December 21, 2025");
+
+  async function fetchProduct(productId) {
+    try {
+      const response = await axios.get(`/api/v1/user/products/${productId}`);
+      setProduct(response.data.product);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function fetchAllProducts() {
+    try {
+      const response = await axios.get(`/api/v1/${product.artistId}/products`);
+      setRelatedProducts(response.data.products);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function handleAddToCart(productId, color, size, quantity) {
+    try {
+      const response = await axios.post(
+        "/api/v1/add/cart",
+        { productId, color, size, quantity },
+        {
+          headers: {
+            Authorization:
+              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NTEwZTYzYjgxM2Y2NWI5ZGE0MzliZSIsImVtYWlsIjoiYWJjQGdtYWlsLmNvbSIsImlhdCI6MTc2NzYzNzIzNSwiZXhwIjoxNzY4MjQyMDM1fQ.DPvnNx13u4EOgg4sz6JBGQ2jhi_QtB3X9xAWNhWaFC8",
+          },
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    if (!productId) return;
+    fetchProduct(productId);
+  }, [productId]);
+
+  useEffect(() => {
+    if (!product?.artistId) return;
+    fetchAllProducts();
+  }, [product?.artistId]);
+
+  // Set default color when product colors are loaded
+  useEffect(() => {
+    if (product.colors && product.colors.length > 0) {
+      setColor(product.colors[0]);
+    } else {
+      setColor("None");
+    }
+  }, [product.colors]);
+
+  // Set default size when product sizes are loaded
+  useEffect(() => {
+    if (product.sizes && product.sizes.length > 0) {
+      setSize(product.sizes[0]);
+    } else {
+      setSize("S");
+    }
+  }, [product.sizes]);
 
   const toggleHeart = (index) => {
     setLiked((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
-  const sizes = ["S", "M", "L", "XL", "XXL"];
-  const colors = [
-    { name: "red", value: "#FF0000" },
-    { name: "blue", value: "#0000FF" },
-    { name: "green", value: "#00FF00" },
-    { name: "black", value: "#000000" },
-  ];
+  const sizes = product.sizes || [];
+  const colors = product.colors || [];
 
   const ratingData = [
     { stars: 5, percentage: 80 },
@@ -46,37 +109,6 @@ export default function ProductView() {
     { stars: 3, percentage: 20 },
     { stars: 2, percentage: 5 },
     { stars: 1, percentage: 2 },
-  ];
-
-  const relatedProducts = [
-    {
-      title: "Custom embroidered hat",
-      description:
-        "Custom embroidered hat means hats that are specially made or decorated with s...",
-      price: "₹149",
-      image: "/products/hat.jpg",
-    },
-    {
-      title: "Sunflower Soul Denim Jacket",
-      description:
-        "A face hidden behind flowers — bold, fearless, and beautifully untamed. This j...",
-      price: "₹299",
-      image: "/products/jacket.jpg",
-    },
-    {
-      title: "Purr-fect Cat Graphic T-Shirt",
-      description:
-        "Show off your love for cats with this fun front-print t-shirt. Made for cat lovers...",
-      price: "₹149",
-      image: "/products/cat-tshirt.png",
-    },
-    {
-      title: "Best Friends Forever Personalized Mug",
-      description:
-        "A charming ceramic mug featuring a best-friends illustration with custom n...",
-      price: "₹299",
-      image: "/products/mug.png",
-    },
   ];
 
   return (
@@ -113,8 +145,8 @@ export default function ProductView() {
           >
             <Box
               component="img"
-              src="/product-image.png"
-              alt="Customized Naruto T-Shirt"
+              src={product.design}
+              alt={product.name}
               sx={{
                 width: "100%",
                 height: "100%",
@@ -126,7 +158,7 @@ export default function ProductView() {
           {/* Product Details */}
           <Box>
             <Chip
-              label="Limited Edition"
+              label={product.category}
               size="small"
               sx={{
                 width: "149px",
@@ -148,11 +180,11 @@ export default function ProductView() {
                 mb: 2,
               }}
             >
-              Customized Naruto T-Shirt
+              {product.name}
             </Typography>
 
             <Typography sx={{ fontSize: "36px", fontWeight: 700, mb: 4 }}>
-              ₹299
+              ₹{product.price}
             </Typography>
 
             {/* Size and Color Selection */}
@@ -165,32 +197,36 @@ export default function ProductView() {
               }}
             >
               {/* Size */}
-              <Box>
-                <Typography sx={{ fontSize: "14px", fontWeight: 600, mb: 1.5 }}>
-                  Select Size
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {sizes.map((s) => (
-                    <Button
-                      key={s}
-                      onClick={() => setSize(s)}
-                      sx={{
-                        minWidth: "71px",
-                        px: 2.5,
-                        py: 1.25,
-                        borderRadius: "24px",
-                        border: "2px solid #000000",
-                        bgcolor: size === s ? "#3D2817" : "#FDF8F2",
-                        color: size === s ? "white" : "#333",
-                        fontSize: "14px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {s}
-                    </Button>
-                  ))}
+              {sizes?.length !== 0 && (
+                <Box>
+                  <Typography
+                    sx={{ fontSize: "14px", fontWeight: 600, mb: 1.5 }}
+                  >
+                    Select Size
+                  </Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {sizes?.map((s) => (
+                      <Button
+                        key={s}
+                        onClick={() => setSize(s)}
+                        sx={{
+                          minWidth: "71px",
+                          px: 2.5,
+                          py: 1.25,
+                          borderRadius: "24px",
+                          border: "2px solid #000000",
+                          bgcolor: size === s ? "#3D2817" : "#FDF8F2",
+                          color: size === s ? "white" : "#333",
+                          fontSize: "14px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {s}
+                      </Button>
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
+              )}
 
               {/* Color */}
               <Box>
@@ -198,19 +234,17 @@ export default function ProductView() {
                   Select Color
                 </Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
-                  {colors.map((c) => (
+                  {colors?.map((c, index) => (
                     <Box
-                      key={c.name}
-                      onClick={() => setColor(c.name)}
+                      key={index}
+                      onClick={() => setColor(c)}
                       sx={{
                         width: 40,
                         height: 40,
                         borderRadius: "50%",
-                        bgcolor: c.value,
+                        bgcolor: c,
                         border:
-                          color === c.name
-                            ? "2px solid #3D2817"
-                            : "2px solid #ddd",
+                          color === c ? "2px solid #3D2817" : "2px solid #ddd",
                         cursor: "pointer",
                         transition: "all 0.2s",
                         "&:hover": { transform: "scale(1.1)" },
@@ -306,6 +340,9 @@ export default function ProductView() {
                   textTransform: "none",
                   "&:hover": { bgcolor: "#2D1F12" },
                 }}
+                onClick={() =>
+                  handleAddToCart(productId, color, size, quantity)
+                }
               >
                 Add to Cart
               </Button>
@@ -341,9 +378,7 @@ export default function ProductView() {
               <Typography
                 sx={{ color: "#666", lineHeight: 1.8, fontSize: "15px" }}
               >
-                A minimalist take on an iconic anime. This custom Naruto T-shirt
-                delivers comfort, quality, and a striking design made for
-                everyday wear. Designed to look good, feel good, and last long.
+                {product.description}
               </Typography>
             </Box>
           </Box>
@@ -380,6 +415,7 @@ export default function ProductView() {
                 fontWeight: 500,
                 lineHeight: 1,
                 display: "inline",
+                color: "black"
               }}
             >
               4.5
@@ -449,7 +485,7 @@ export default function ProductView() {
                     "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 }}
               />
-              <Typography sx={{ fontSize: "18px", fontWeight: 600 }}>
+              <Typography sx={{ fontSize: "18px", fontWeight: 600, color: "black" }}>
                 Rahul S.
               </Typography>
             </Box>
@@ -509,17 +545,21 @@ export default function ProductView() {
             gap: 3,
           }}
         >
-          {relatedProducts.map((product, index) => (
-            <ProductsCard
-              index={index}
-              title={product.title}
-              image={product.image}
-              description={product.description}
-              price={product.price}
-              isLiked={isLiked}
-              toggleHeart={toggleHeart}
-            />
-          ))}
+          {relatedProducts
+            .filter((product) => product._id != productId)
+            .map((product, index) => (
+              <ProductsCard
+                key={index}
+                index={index}
+                id={product._id}
+                title={product.name}
+                image={product.design}
+                description={product.description}
+                price={product.price}
+                isLiked={isLiked}
+                toggleHeart={toggleHeart}
+              />
+            ))}
         </Box>
       </Container>
     </Box>
