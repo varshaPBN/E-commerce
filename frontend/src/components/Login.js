@@ -26,22 +26,16 @@ export default function Login() {
           mb: 4,
         }}
       >
-        {/* <img
-          src="/logo (2).png"
-          alt="Artloom"
-          style={{ height: 36 }}
-          
-        /> */}
 
         {/* Logo */}
-          <Box
-            component="img"
-            src="/logo.png"
-            alt="Artloom Logo"
-            sx={{
-              height: "60px",
-              cursor: "pointer",
-            }} />
+        <Box
+          component="img"
+          src="/logo.png"
+          alt="Artloom Logo"
+          sx={{
+            height: "60px",
+            cursor: "pointer",
+          }} />
 
         <Typography fontSize={14} color="text.secondary">
           Need Help?
@@ -71,16 +65,6 @@ export default function Login() {
             ← Back
           </Typography>
 
-          {/* <Chip
-            icon={<LockOutlinedIcon fontSize="small" />}
-            label="Secure access · Magic link sent"
-            sx={{
-              bgcolor: "#fff",
-              fontSize: 12,
-              mb: 3,
-              borderRadius: 2,
-            }}
-          /> */}
 
           <Card sx={{ width: 300, mx: "auto", borderRadius: 4 }}>
             <Box sx={{ position: "relative" }}>
@@ -109,7 +93,7 @@ export default function Login() {
               />
             </Box>
 
-            <CardContent>
+            {/* <CardContent>
               <Typography fontWeight={600}>Abstract Soul</Typography>
               <Typography fontSize={12} color="text.secondary">
                 Your Store Preview
@@ -120,6 +104,29 @@ export default function Login() {
               <Typography fontSize={12} color="red">
                 Manage
               </Typography>
+            </CardContent> */}
+
+            <CardContent>
+              <Typography fontWeight={600}>Abstract Soul</Typography>
+
+              <Typography fontSize={12} color="text.secondary">
+                Your Store Preview
+              </Typography>
+
+              {/* Live + Manage in one line */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                <Typography fontSize={12} color="green">
+                  ● Live
+                </Typography>
+
+                <Typography
+                  fontSize={12}
+                  color="red"
+                  sx={{ cursor: "pointer",ml:20 }}
+                >
+                  Manage
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Box>
@@ -149,7 +156,7 @@ export default function Login() {
             sx={{ mb: 4, maxWidth: 420 }}
           />
 
-          <Button 
+          <Button
             fullWidth
             variant="contained"
             sx={{
