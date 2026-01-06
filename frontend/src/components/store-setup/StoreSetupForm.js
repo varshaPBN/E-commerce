@@ -107,7 +107,7 @@ export default function StoreSetupForm() {
           onChange={(e) => setDomain(e.target.value)}
           sx={{
             '& .MuiOutlinedInput-root': {
-              backgroundColor: domain ? '#F8F8F8' : '#FFFFFF',
+              backgroundColor: domain ? '#F5ECE3' : '#FFFFFF',
               borderRadius: '12px',
               '& fieldset': {
                 borderColor: '#E0E0E0',

@@ -17,7 +17,7 @@ export default function ProductCreation() {
         sx={{
           minHeight: '100vh',
           width: '100%',
-          backgroundColor: '#F7F3EB',
+          backgroundColor: '#F5ECE3',
         }}
       >
         <DesignHeader />
