@@ -4,7 +4,7 @@ import { Box, Typography, Button } from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import AddIcon from '@mui/icons-material/Add';
 
-export default function DashboardGreeting() {
+export default function DashboardGreeting({artist}) {
   const router = useRouter();
   return (
     <Box
@@ -28,7 +28,7 @@ export default function DashboardGreeting() {
             mb: 0.5,
           }}
         >
-          Good Morning, Kiara
+          Good Morning, {artist}
         </Typography>
         <Typography
           sx={{

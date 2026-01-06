@@ -2,13 +2,13 @@ import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+import InventoryIcon from '@mui/icons-material/Visibility';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 
 const iconMap = {
   revenue: BarChartIcon,
   orders: ShoppingBagIcon,
-  visits: VisibilityIcon,
+  visits: InventoryIcon,
   reviews: ThumbUpIcon,
 };
 
