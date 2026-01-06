@@ -1,13 +1,19 @@
-import { Dialog, DialogTitle, DialogContent, TextField, Button, Box, Typography, Link } from '@mui/material';
-import { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, TextField, Button, Box, Typography, Link, Alert, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
 
-const OtpModal = ({ open, onClose, onSubmit, onResend }) => {
+const OtpModal = ({ open, onClose, onSubmit, onResend, error, loading }) => {
   const [otp, setOtp] = useState('');
+
+  // Clear OTP when error occurs or modal closes
+  useEffect(() => {
+    if (!open) {
+      setOtp('');
+    }
+  }, [open]);
 
   const handleSubmit = () => {
     if (otp.length === 6) {
       onSubmit(otp);
-      setOtp('');
     }
   };
 
@@ -63,6 +69,12 @@ const OtpModal = ({ open, onClose, onSubmit, onResend }) => {
             We've sent a verification code to your email
           </Typography>
 
+          {error && (
+            <Alert severity="error" sx={{ mb: 1 }}>
+              {error}
+            </Alert>
+          )}
+
           <TextField
             label="Enter OTP"
             value={otp}
@@ -70,6 +82,8 @@ const OtpModal = ({ open, onClose, onSubmit, onResend }) => {
               const value = e.target.value.replace(/\D/g, '');
               setOtp(value);
             }}
+            disabled={loading}
+            error={!!error}
             fullWidth
             inputProps={{
               maxLength: 6,
@@ -85,13 +99,13 @@ const OtpModal = ({ open, onClose, onSubmit, onResend }) => {
                 backgroundColor: '#F8F8F8',
                 borderRadius: '12px',
                 '& fieldset': {
-                  borderColor: '#E0E0E0',
+                  borderColor: error ? '#d32f2f' : '#E0E0E0',
                 },
                 '&:hover fieldset': {
-                  borderColor: '#D0D0D0',
+                  borderColor: error ? '#d32f2f' : '#D0D0D0',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: '#9C6ADE',
+                  borderColor: error ? '#d32f2f' : '#9C6ADE',
                 },
               },
             }}
@@ -101,7 +115,7 @@ const OtpModal = ({ open, onClose, onSubmit, onResend }) => {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={otp.length !== 6}
+            disabled={otp.length !== 6 || loading}
             fullWidth
             sx={{
               mt: 2,
@@ -123,7 +137,11 @@ const OtpModal = ({ open, onClose, onSubmit, onResend }) => {
               },
             }}
           >
-            Verify OTP
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: '#fff' }} />
+            ) : (
+              'Verify OTP'
+            )}
           </Button>
 
           <Box
