@@ -1,184 +1,165 @@
+import { useState } from "react";
+import { useRouter } from "next/router";
 import {
   Box,
   Typography,
-  TextField,
-  InputAdornment,
-  IconButton,
   Card,
   CardContent,
   CardMedia,
   Checkbox,
   Divider,
   Avatar,
+  IconButton,
 } from "@mui/material";
 
-import SearchIcon from "@mui/icons-material/Search";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
-import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
+
+import ProductsHeader from "@/components/common/ProductsHeader";
 
 export default function ProductPage() {
+  const [likedProducts, setLikedProducts] = useState({});
+  const router = useRouter();
+
+  const toggleLike = (title) => {
+    setLikedProducts((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }));
+  };
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", px: 6, py: 3 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       {/* ================= HEADER ================= */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 3,
-        }}
-      >
-        {/* Logo */}
-        <Typography fontWeight={700} color="primary">
-          ✦ Artloom
-        </Typography>
+      <ProductsHeader />
 
-        {/* Search */}
-        <TextField
-          placeholder="Search..."
-          size="small"
-          sx={{
-            width: 360,
-            bgcolor: "#F3ECE3",
-            borderRadius: 10,
-          }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
-
-        {/* Icons */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton>
-            <NotificationsNoneOutlinedIcon />
-          </IconButton>
-          <IconButton>
-            <ShoppingBagOutlinedIcon />
-          </IconButton>
-          <Avatar src="/profile.png" />
-        </Box>
-      </Box>
-
-      {/* ================= HERO ================= */}
-      <Box
-        sx={{
-          bgcolor: "#DED3BF",
-          borderRadius: 4,
-          px: 6,
-          py: 4,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 4,
-        }}
-      >
-        <Typography
-          variant="h4"
-          fontWeight={700}
-          sx={{ fontFamily: "Playfair Display" }}
-        >
-          Marcus Chen’s Collection
-        </Typography>
-
-        <Avatar
-          src="/creator.png"
-          sx={{ width: 80, height: 80 }}
-        />
-      </Box>
-
-      {/* ================= CONTENT ================= */}
-      <Box sx={{ display: "flex", gap: 4 }}>
-        {/* ========== SIDEBAR ========== */}
-        <Box sx={{ width: 220 }}>
-          <Typography fontWeight={600} mb={2}>
-            Category
-          </Typography>
-
-          {[
-            "Clothing",
-            "Posters & Prints",
-            "Accessories",
-            "Home & Living",
-            "Limited Editions",
-          ].map((item) => (
-            <Box key={item} sx={{ display: "flex", alignItems: "center" }}>
-              <Checkbox size="small" />
-              <Typography fontSize={14}>{item}</Typography>
-            </Box>
-          ))}
-
-          <Typography
-            fontSize={13}
-            color="primary"
-            sx={{ mt: 1, cursor: "pointer" }}
-          >
-            Show more
-          </Typography>
-        </Box>
-
-        {/* ========== PRODUCT GRID ========== */}
+      {/* ================= PAGE CONTENT ================= */}
+      <Box sx={{ px: 6, py: 3 }}>
+        {/* ================= HERO ================= */}
         <Box
           sx={{
-            flex: 1,
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 3,
+            bgcolor: "#DED3BF",
+            borderRadius: 4,
+            px: 6,
+            py: 4,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 4,
           }}
         >
-          {products.map((product) => (
-            <Card
-              key={product.title}
-              sx={{
-                borderRadius: 3,
-                boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-                position: "relative",
-              }}
-            >
-              <CardMedia
-                component="img"
-                height="200"
-                image={product.image}
-                alt={product.title}
-              />
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            sx={{ fontFamily: "Playfair Display" }}
+          >
+            Marcus Chen’s Collection
+          </Typography>
 
-              <IconButton
+          <Avatar src="/creator.png" sx={{ width: 80, height: 80 }} />
+        </Box>
+
+        {/* ================= CONTENT ================= */}
+        <Box sx={{ display: "flex", gap: 4 }}>
+          {/* ========== SIDEBAR ========== */}
+          <Box sx={{ width: 220 }}>
+            <Typography fontWeight={600} mb={2}>
+              Category
+            </Typography>
+
+            {[
+              "Clothing",
+              "Posters & Prints",
+              "Accessories",
+              "Home & Living",
+              "Limited Editions",
+            ].map((item) => (
+              <Box key={item} sx={{ display: "flex", alignItems: "center" }}>
+                <Checkbox size="small" />
+                <Typography fontSize={14}>{item}</Typography>
+              </Box>
+            ))}
+
+            <Typography
+              fontSize={13}
+              color="primary.dark"
+              sx={{ mt: 1, cursor: "pointer" }}
+            >
+              Show more
+            </Typography>
+          </Box>
+
+          {/* ========== PRODUCT GRID ========== */}
+          <Box
+            sx={{
+              flex: 1,
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 3,
+            }}
+          >
+            {products.map((product) => (
+              <Card
+                key={product.title}
+                onClick={() => router.push("/user-login")}
                 sx={{
-                  position: "absolute",
-                  bottom: 110,
-                  right: 10,
-                  bgcolor: "#fff",
+                  borderRadius: 3,
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                  position: "relative",
+                  cursor: "pointer",
+                  transition: "0.3s",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+                  },
                 }}
               >
-                <FavoriteBorderIcon />
-              </IconButton>
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={product.image}
+                  alt={product.title}
+                />
 
-              <CardContent>
-                <Typography fontWeight={600} fontSize={14}>
-                  {product.title}
-                </Typography>
-
-                <Typography
-                  fontSize={12}
-                  color="text.secondary"
-                  mb={1}
+                {/* LIKE BUTTON */}
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    toggleLike(product.title);
+                  }}
+                  sx={{
+                    position: "absolute",
+                    bottom: 110,
+                    right: 10,
+                    bgcolor: "#fff",
+                    "&:hover": { bgcolor: "#fff" },
+                  }}
                 >
-                  {product.desc}
-                </Typography>
+                  {likedProducts[product.title] ? (
+                    <FavoriteIcon sx={{ color: "red" }} />
+                  ) : (
+                    <FavoriteBorderIcon />
+                  )}
+                </IconButton>
 
-                <Divider sx={{ my: 1 }} />
+                <CardContent>
+                  <Typography fontWeight={600} fontSize={14}>
+                    {product.title}
+                  </Typography>
 
-                <Typography fontWeight={600}>
-                  ₹{product.price}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
+                  <Typography fontSize={12} color="text.secondary" mb={1}>
+                    {product.desc}
+                  </Typography>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <Typography fontWeight={600}>
+                    ₹{product.price}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -191,25 +172,25 @@ const products = [
     title: "Customized Naruto T-shirt",
     desc: "A fashionable t-shirt with anime print",
     price: 299,
-    image: "/p1.png",
+    image: "/Naruto.png",
   },
   {
     title: "Custom embroidered hat",
     desc: "Custom embroidered hat made for you",
     price: 149,
-    image: "/p2.png",
+    image: "/cap.png",
   },
   {
     title: "Sunflower Soul Denim Jacket",
     desc: "A denim jacket with sunflower design",
     price: 500,
-    image: "/p3.png",
+    image: "/jacket.png",
   },
   {
     title: "Pure-fect Cat Graphic T-shirt",
     desc: "Fun cat graphic t-shirt",
     price: 149,
-    image: "/p4.png",
+    image: "/tshirt.png",
   },
   {
     title: "Best Friends Forever Personalized Mug",

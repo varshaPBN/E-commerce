@@ -17,7 +17,7 @@ export default function Navbar() {
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box
+        {/* <Box
           sx={{
             width: 24,
             height: 24,
@@ -25,8 +25,8 @@ export default function Navbar() {
             backgroundColor: '#9C27B0',
             mr: 1,
           }}
-        />
-        <Box
+        /> */}
+        {/* <Box
           component="span"
           sx={{
             fontFamily: "'Playfair Display'",
@@ -36,7 +36,16 @@ export default function Navbar() {
           }}
         >
           Artloom
-        </Box>
+        </Box> */}
+        <Box
+            component="img"
+            src="/logo.png"
+            alt="Artloom Logo"
+            sx={{
+              height: "60px",
+              cursor: "pointer",
+            }}
+          />
       </Box>
       <Box
         sx={{
@@ -63,7 +72,7 @@ export default function Navbar() {
       </Box>
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <Link
-          href="/login"
+          href="/login-page"
           sx={{
             color: '#3B2A1A',
             textDecoration: 'none',

@@ -10,8 +10,10 @@ import {
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useRouter } from "next/router";
 
 export default function Login() {
+  const router = useRouter();
   return (
     <Box sx={{ minHeight: "100vh", p: 4 }}>
       {/* HEADER */}
@@ -24,12 +26,22 @@ export default function Login() {
           mb: 4,
         }}
       >
-        <img
+        {/* <img
           src="/logo (2).png"
           alt="Artloom"
           style={{ height: 36 }}
           
-        />
+        /> */}
+
+        {/* Logo */}
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Artloom Logo"
+            sx={{
+              height: "60px",
+              cursor: "pointer",
+            }} />
 
         <Typography fontSize={14} color="text.secondary">
           Need Help?
@@ -137,7 +149,7 @@ export default function Login() {
             sx={{ mb: 4, maxWidth: 420 }}
           />
 
-          <Button
+          <Button 
             fullWidth
             variant="contained"
             sx={{

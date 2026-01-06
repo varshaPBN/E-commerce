@@ -16,7 +16,7 @@ export default function DesignHeader() {
       }}
     >
       {/* Logo */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <AutoAwesomeIcon sx={{ color: '#9C27B0', fontSize: 28 }} />
         <Typography
           sx={{
@@ -28,7 +28,16 @@ export default function DesignHeader() {
         >
           Artloom
         </Typography>
-      </Box>
+      </Box> */}
+      <Box
+        component="img"
+        src="/logo.png"
+        alt="Artloom Logo"
+        sx={{
+          height: "60px",
+          cursor: "pointer",
+        }}
+      />
 
       {/* Navigation */}
       <Box
