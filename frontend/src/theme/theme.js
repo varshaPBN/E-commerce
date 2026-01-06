@@ -19,6 +19,7 @@ const theme = createTheme({
     text: {
       primary: '#8B4513', // Dark brown
       secondary: '#654321',
+      default: '#000000',
     },
     success: {
       main: '#4CAF50', // Green for checkmarks
