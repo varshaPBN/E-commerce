@@ -26,17 +26,16 @@ require("./models/Product")
 require("./models/Cart")
 require("./models/Order") 
 require("./models/Artist")
+require("./models/Admin")
 
 
 // Routes
 require("./routes/cartRoutes")(app)
 require("./routes/userRoutes")(app)
 require("./routes/artistRoutes")(app)
-require("./routes/authRoutes")(app)
-
-
-
-console.log("EMAIL:", process.env.EMAIL_USER); //for otp testing
+require("./routes/productRoutes")(app)
+require("./routes/orderRoutes")(app)
+require("./routes/adminRoutes")(app)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

@@ -7,18 +7,62 @@ const orderSchema = new Schema({
     required: true,
     unique: true,
   },
-  cartId: {
+  userId: {
     type: Schema.Types.ObjectId,
-    ref: "cart",
+    ref: "users",
+    required: true,
+  },
+  items: [{
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: "products",
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    color: {
+      type: String,
+      required: true,
+    },
+    size: {
+      type: String,
+      required: true,
+    },
+  }],
+  subtotal: {
+    type: Number,
+    required: true,
+  },
+  shippingCharge: {
+    type: Number,
+    default: 50,
+  },
+  taxAmount: {
+    type: Number,
+    default: 10,
+  },
+  totalAmount: {
+    type: Number,
     required: true,
   },
   shippingAddress: {
-    name: { type: String },
-    phone: { type: Number },
-    address: { type: String },
-    city: { type: String },
-    state: { type: String },
-    pincode: { type: Number },
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    pincode: { type: String, required: true },
+  },
+  deliveryDate: {
+    type: Date,
+    required: true,
   },
   orderStatus: {
     type: String,
@@ -39,8 +83,11 @@ const orderSchema = new Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["upi", "card", "cod"],
-  }
+    enum: ["cod", "online"],
+    required: true,
+  },
+}, {
+  timestamps: true
 });
 
-mongoose.model("orders", orderSchema);
+module.exports = mongoose.model("orders", orderSchema);
