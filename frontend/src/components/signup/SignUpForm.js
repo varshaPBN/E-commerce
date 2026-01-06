@@ -3,36 +3,81 @@ import { Box, TextField, Button, Typography, Checkbox, FormControlLabel, Link } 
 import EmailIcon from '@mui/icons-material/Email';
 import GoogleIcon from '@mui/icons-material/Google';
 import OtpModal from './OtpModal';
+import axios from 'axios';
 
 export default function SignUpForm() {
   const [email, setEmail] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (email && validateEmail(email) && agreed) {
-      setOtpModalOpen(true);
+      setLoading(true);
+      setError('');
+      try {
+        const response = await axios.post('/api/v1/artist/signup/email', {email});
+  
+        if (response.status === 201) {
+          setOtpModalOpen(true);
+        } else {
+          setError(data.message || 'Failed to send OTP');
+        }
+      } catch (error) {
+        setError(response.data.message || 'Failed to send OTP');
+        console.error('Error sending OTP:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleOtpSubmit = (otp) => {
-    console.log('OTP submitted:', otp);
-    // Here you would typically verify the OTP with your backend
-    // After successful verification, navigate to store setup
-    setOtpModalOpen(false);
-    if (typeof window !== 'undefined') {
-      window.location.href = '/store-setup';
+   const handleOtpSubmit = async (otp) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.post('/api/v1/artist/signup/otp', { email, otp });
+  
+      if (response.status === 200 && response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        setOtpModalOpen(false);
+        if (typeof window !== 'undefined') {
+          window.location.href = '/store-setup';
+        }
+      } else {
+        setError(response.data.message || 'Invalid OTP. Please try again.');
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'Network error. Please try again.');
+      console.error('Error verifying OTP:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleResendOtp = () => {
-    console.log('Resending OTP to:', email);
-    // Here you would typically call your backend to resend OTP
+  const handleResendOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await axios.post('/api/v1/artist/signup/email', { email });
+      
+      if (response.status === 201) {
+        setOtpModalOpen(true);
+      } else {
+        setError(response.data.message || 'Failed to resend OTP');
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'Network error. Please try again.');
+      console.error('Error resending OTP:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -138,7 +183,7 @@ export default function SignUpForm() {
         fullWidth
         variant="contained"
         onClick={handleProceed}
-        disabled={!email || !validateEmail(email) || !agreed}
+        disabled={!email || !validateEmail(email) || !agreed || loading}
         sx={{
           backgroundColor: '#3B2A1A',
           color: '#FFFFFF',
@@ -155,7 +200,7 @@ export default function SignUpForm() {
           },
         }}
       >
-        Click To Proceed
+        {loading ? 'Processing...' : 'Click To Proceed'}
       </Button>
 
       <Button
