@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Link } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import BackButton from '../common/BackButton';
 
 export default function SignUpHeader() {
   return (
@@ -8,7 +9,7 @@ export default function SignUpHeader() {
       sx={{
         width: '100%',
         px: { xs: 2, md: 6 },
-        py: 3,
+        // py: 3,
         backgroundColor: '#FDF8F2',
       }}
     >
@@ -46,7 +47,7 @@ export default function SignUpHeader() {
               cursor: "pointer",
             }}
           />
-        </Box>
+          </Box>
         <Link
           href="/"
           sx={{
@@ -62,8 +63,8 @@ export default function SignUpHeader() {
             '&:hover': { textDecoration: 'underline' },
           }}
         >
-          <ArrowBackIcon sx={{ fontSize: 16 }} />
-          Back
+          {/* <ArrowBackIcon sx={{ fontSize: 16 }} /> */}
+          <BackButton/>
         </Link>
       </Box>
     </Box>
