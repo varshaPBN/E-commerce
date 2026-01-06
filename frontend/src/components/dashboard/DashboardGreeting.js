@@ -15,7 +15,7 @@ export default function DashboardGreeting() {
         justifyContent: 'space-between',
         px: { xs: 2, md: 4 },
         py: 3,
-        backgroundColor: '#FFFFFF',
+        bgcolor:'#F7F3EB',
       }}
     >
       <Box>

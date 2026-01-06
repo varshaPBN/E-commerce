@@ -14,7 +14,7 @@ export default function SignUpHeader() {
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box
+          {/* <Box
             sx={{
               width: 24,
               height: 24,
@@ -22,8 +22,8 @@ export default function SignUpHeader() {
               background: 'linear-gradient(135deg, #9C27B0 0%, #E91E63 100%)',
               mr: 1,
             }}
-          />
-          <Box
+          /> */}
+          {/* <Box
             component="span"
             sx={{
               fontFamily: "'Playfair Display'",
@@ -36,7 +36,16 @@ export default function SignUpHeader() {
             }}
           >
             Artloom
-          </Box>
+          </Box> */}
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Artloom Logo"
+            sx={{
+              height: "60px",
+              cursor: "pointer",
+            }}
+          />
         </Box>
         <Link
           href="/"
@@ -48,7 +57,8 @@ export default function SignUpHeader() {
             textDecoration: 'none',
             fontSize: 14,
             fontWeight: 500,
-            ml: 4,
+            ml: -15,
+            mt: 10,
             '&:hover': { textDecoration: 'underline' },
           }}
         >
