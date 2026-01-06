@@ -5,8 +5,54 @@ import DashboardGreeting from '@/components/dashboard/DashboardGreeting';
 import KPICard from '@/components/dashboard/KPICard';
 import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopProducts from '@/components/dashboard/TopProducts';
+import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
+  const [artistInfo, setArtistInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+    const fetchArtistInfo = async () => {
+      try {
+        const token = localStorage.getItem('token'); // Adjust key name if different
+        if (!token) {
+          // Redirect to login if no token
+          window.location.href = '/login-page';
+          return;
+        }
+
+        const response = await fetch('http://localhost:5001/api/v1/artist/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.status === 401) {
+          // Token invalid, redirect to login
+          localStorage.removeItem('token');
+          window.location.href = '/login-page';
+          return;
+        }
+
+        const data = await response.json();
+        if (data.artist) {
+          setArtistInfo(data.artist);
+        }
+      } catch (error) {
+        console.error('Error fetching artist info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArtistInfo();
+  }, []);
+
+  if (loading) {
+    return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</Box>;
+  }
   return (
     <>
       <Head>
