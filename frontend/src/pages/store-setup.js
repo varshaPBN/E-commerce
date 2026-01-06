@@ -21,7 +21,7 @@ export default function StoreSetup() {
           backgroundColor: '#FDF8F2',
         }}
       >
-        <StoreSetupHeader />
+        {/* <StoreSetupHeader /> */}
         <Container maxWidth="lg">
           <Box
             sx={{

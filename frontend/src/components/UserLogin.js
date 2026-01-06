@@ -4,11 +4,14 @@ import {
   Checkbox,
   TextField,
   Typography,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import axios from "axios";
 
 //  import OTP modal
 import OtpModal from "@/components/signup/OtpModal";
@@ -18,32 +21,113 @@ export default function UserLogin() {
 
   // state to control OTP popup
   const [otpOpen, setOtpOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // open modal
-  const handleLoginClick = () => {
-    setOtpOpen(true);
+  // open modal and send OTP
+  const handleLoginClick = async () => {
+    // Validate email
+    if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      // Send OTP to backend - validateStatus prevents throwing on 4xx/5xx
+      const response = await axios.post("/api/v1/send-otp", { email }, {
+        validateStatus: () => true // Don't throw on any status code
+      });
+      
+      if (response.status === 200 && response.data.message === "OTP sent successfully") {
+        setSuccess("OTP sent to your email!");
+        setOtpOpen(true);
+      } else {
+        setError(
+          response.data?.message || "Failed to send OTP. Please try again."
+        );
+      }
+    } catch (err) {
+      // Fallback error handling (shouldn't reach here with validateStatus)
+      setError("Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // close modal
   const handleCloseOtp = () => {
     setOtpOpen(false);
+    setError("");
+    setSuccess("");
   };
 
   // OTP submit handler
-  const handleOtpSubmit = (otp) => {
-    console.log("Entered OTP:", otp);
+  const handleOtpSubmit = async (otp) => {
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
-    // verify OTP via API here
+    try {
+      // Verify OTP with backend - validateStatus prevents throwing on 4xx/5xx
+      const response = await axios.post("/api/v1/verify-otp", {
+        email,
+        otp,
+      }, {
+        validateStatus: () => true // Don't throw on any status code
+      });
 
-    setOtpOpen(false);
-    router.push("/user-product-page");
+      if (response.status === 200 && response.data.message === "OTP verified successfully") {
+        setSuccess("OTP verified successfully!");
+        setOtpOpen(false);
+        // Redirect after successful verification
+        setTimeout(() => {
+          router.push("/user-product-page");
+        }, 500);
+      } else {
+        // Handle error responses (400, 500, etc.)
+        setError(
+          response.data?.message || "Invalid OTP. Please check and try again."
+        );
+      }
+    } catch (err) {
+      // Fallback error handling (shouldn't reach here with validateStatus)
+      setError("Invalid OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // resend OTP handler
-  const handleResendOtp = () => {
-    console.log("Resend OTP clicked");
+  const handleResendOtp = async () => {
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
-    // call resend OTP API here
+    try {
+      // Resend OTP to backend - validateStatus prevents throwing on 4xx/5xx
+      const response = await axios.post("/api/v1/send-otp", { email }, {
+        validateStatus: () => true // Don't throw on any status code
+      });
+
+      if (response.status === 200 && response.data.message === "OTP sent successfully") {
+        setSuccess("OTP resent to your email!");
+      } else {
+        setError(
+          response.data?.message || "Failed to resend OTP. Please try again."
+        );
+      }
+    } catch (err) {
+      // Fallback error handling (shouldn't reach here with validateStatus)
+      setError("Failed to resend OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,11 +175,30 @@ export default function UserLogin() {
             <TextField
               fullWidth
               placeholder="you@example.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError("");
+              }}
+              disabled={loading}
+              error={!!error && !otpOpen}
               InputProps={{
                 startAdornment: <MailOutlineIcon sx={{ mr: 1 }} />,
               }}
               sx={{ mb: 2 }}
             />
+
+            {error && !otpOpen && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {success && !otpOpen && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {success}
+              </Alert>
+            )}
 
             <Box
               display="flex"
@@ -116,14 +219,22 @@ export default function UserLogin() {
               fullWidth
               variant="contained"
               onClick={handleLoginClick}
+              disabled={loading}
               sx={{
                 bgcolor: "#8B5E3C",
                 py: 1.4,
                 borderRadius: 6,
                 textTransform: "none",
+                "&:disabled": {
+                  bgcolor: "#CCCCCC",
+                },
               }}
             >
-              Log In And Checkout
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: "#fff" }} />
+              ) : (
+                "Log In And Checkout"
+              )}
             </Button>
           </Box>
 
@@ -172,6 +283,8 @@ export default function UserLogin() {
         onClose={handleCloseOtp}
         onSubmit={handleOtpSubmit}
         onResend={handleResendOtp}
+        error={otpOpen ? error : ""}
+        loading={loading}
       />
     </>
   );
