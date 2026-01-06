@@ -25,7 +25,7 @@ export default function StoreSetup() {
         <Container maxWidth="lg">
           <Box
             sx={{
-              backgroundColor: '#F5F5DC',
+              backgroundColor: '#F5ECE3',
               borderRadius: '24px',
               boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
               mt: 4,
