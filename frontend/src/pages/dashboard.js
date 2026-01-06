@@ -6,6 +6,9 @@ import KPICard from '@/components/dashboard/KPICard';
 import RecentOrders from '@/components/dashboard/RecentOrders';
 import TopProducts from '@/components/dashboard/TopProducts';
 import { useState, useEffect } from 'react';
+import theme from "@/theme/theme";
+import { pink } from '@mui/material/colors';
+
 
 export default function Dashboard() {
   const [artistInfo, setArtistInfo] = useState(null);
@@ -54,7 +57,9 @@ export default function Dashboard() {
     return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</Box>;
   }
   return (
+    
     <>
+    
       <Head>
         <title>Dashboard - Artloom</title>
         <meta name="description" content="Your Artloom store dashboard" />
@@ -71,9 +76,10 @@ export default function Dashboard() {
         <DashboardHeader />
         <DashboardGreeting />
 
-        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 }, py: 4 }}>
+
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 }, py: 4 ,bgcolor:'#F7F3EB'}}>
           {/* KPI Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid container spacing={20} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={3}>
               <KPICard
                 type="revenue"
@@ -112,12 +118,14 @@ export default function Dashboard() {
             </Grid>
           </Grid>
 
+
+
           {/* Recent Orders and Top Products */}
           <Grid container spacing={3}>
             <Grid item xs={12} lg={8}>
               <RecentOrders />
             </Grid>
-            <Grid item xs={12} lg={4}>
+            <Grid item xs={12} lg={4} sx={{ml:"auto", transform: "translateX(-24px)"}}>
               <TopProducts />
             </Grid>
           </Grid>

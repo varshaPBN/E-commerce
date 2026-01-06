@@ -7,8 +7,10 @@ import {
 } from "@mui/material";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { useRouter } from "next/router";
 
 export default function UserLogin() {
+    const router = useRouter();
     return (
         <Box
             sx={{
@@ -87,7 +89,7 @@ export default function UserLogin() {
                     </Box>
 
 
-                    <Button
+                    <Button onClick={()=> router.push("/user-product-page")}
                         fullWidth
                         variant="contained"
                         sx={{
@@ -122,7 +124,7 @@ export default function UserLogin() {
                         </Box>
                     ))}
 
-                    <Button
+                    <Button onClick={()=> router.push("/user-product-page")}
                         fullWidth
                         variant="contained"
                         sx={{
