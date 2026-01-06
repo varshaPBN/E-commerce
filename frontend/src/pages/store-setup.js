@@ -4,8 +4,20 @@ import StoreSetupHeader from '@/components/store-setup/StoreSetupHeader';
 import AvatarUpload from '@/components/store-setup/AvatarUpload';
 import DecorativeImages from '@/components/store-setup/DecorativeImages';
 import StoreSetupForm from '@/components/store-setup/StoreSetupForm';
+import { useState } from 'react';
 
 export default function StoreSetup() {
+  const [avatar, setAvatar] = useState(null);
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result); // base64 data URL
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   return (
     <>
       <Head>
@@ -21,11 +33,11 @@ export default function StoreSetup() {
           backgroundColor: '#FDF8F2',
         }}
       >
-        {/* <StoreSetupHeader /> */}
+        <StoreSetupHeader />
         <Container maxWidth="lg">
           <Box
             sx={{
-              backgroundColor: '#F5ECE3',
+              backgroundColor: '#F5F5DC',
               borderRadius: '24px',
               boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
               mt: 4,
@@ -50,7 +62,7 @@ export default function StoreSetup() {
                   alignItems: { xs: 'center', lg: 'flex-start' },
                 }}
               >
-                <AvatarUpload />
+                <AvatarUpload onChange={handleAvatarChange}/>
                 <DecorativeImages />
               </Box>
 
@@ -65,7 +77,7 @@ export default function StoreSetup() {
                   pointerEvents: 'auto',
                 }}
               >
-                <StoreSetupForm />
+                <StoreSetupForm avatar={avatar}/>
               </Box>
             </Box>
           </Box>

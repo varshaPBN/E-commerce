@@ -8,49 +8,80 @@ import TopProducts from '@/components/dashboard/TopProducts';
 import { useState, useEffect } from 'react';
 import theme from "@/theme/theme";
 import { pink } from '@mui/material/colors';
+import axios from 'axios';
 
 
 export default function Dashboard() {
   const [artistInfo, setArtistInfo] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    analytics: null,
+    recentOrders: [],
+    topProducts: []
+  });
   const [loading, setLoading] = useState(true);
 
-   useEffect(() => {
-    const fetchArtistInfo = async () => {
+  useEffect(() => {
+    const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem('token'); // Adjust key name if different
+        const token = localStorage.getItem('token');
         if (!token) {
-          // Redirect to login if no token
           window.location.href = '/login-page';
           return;
         }
-
-        const response = await fetch('http://localhost:5001/api/v1/artist/profile', {
-          method: 'GET',
+  
+        // Configure axios defaults for this request
+        const axiosConfig = {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-        });
-
-        if (response.status === 401) {
-          // Token invalid, redirect to login
+        };
+  
+        // Fetch all dashboard data in parallel
+        const [profileRes, analyticsRes, ordersRes, productsRes] = await Promise.all([
+          axios.get('/api/v1/artist/profile', axiosConfig),
+          axios.get('/api/v1/artist/dashboard/analytics', axiosConfig),
+          axios.get('/api/v1/artist/dashboard/recent-orders?limit=5', axiosConfig),
+          axios.get('/api/v1/artist/dashboard/top-products?limit=5', axiosConfig),
+        ]);
+  
+        if (profileRes.data.artist) {
+          setArtistInfo(profileRes.data.artist);
+        }
+  
+        if (analyticsRes.data.success) {
+          setDashboardData(prev => ({
+            ...prev,
+            analytics: analyticsRes.data.analytics,
+          }));
+        }
+  
+        if (ordersRes.data.success) {
+          setDashboardData(prev => ({
+            ...prev,
+            recentOrders: ordersRes.data.orders,
+          }));
+        }
+  
+        if (productsRes.data.success) {
+          setDashboardData(prev => ({
+            ...prev,
+            topProducts: productsRes.data.products,
+          }));
+        }
+      } catch (error) {
+        if (error.response?.status === 401) {
           localStorage.removeItem('token');
           window.location.href = '/login-page';
           return;
         }
-
-        const data = await response.json();
-        if (data.artist) {
-          setArtistInfo(data.artist);
-        }
-      } catch (error) {
-        console.error('Error fetching artist info:', error);
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchArtistInfo();
+  
+    fetchDashboardData();
   }, []);
 
   if (loading) {
@@ -74,45 +105,45 @@ export default function Dashboard() {
         }}
       >
         <DashboardHeader />
-        <DashboardGreeting />
+        <DashboardGreeting artist={artistInfo?.name || 'Artist'} />
 
 
-        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 }, py: 4 ,bgcolor:'#F7F3EB'}}>
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 }, py: 3 ,bgcolor:'#F7F3EB'}}>
           {/* KPI Cards */}
-          <Grid container spacing={20} sx={{ mb: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={3}>
               <KPICard
                 type="revenue"
-                value="$4289.00"
-                change="+12.5%"
-                changeType="positive"
+                value={`$${dashboardData.analytics?.revenue?.value || '0.00'}`}
+                change={dashboardData.analytics?.revenue?.change || '+0%'}
+                changeType={dashboardData.analytics?.revenue?.changeType || 'neutral'}
                 label="Total Revenue"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <KPICard
                 type="orders"
-                value="156"
-                change="+5.2%"
-                changeType="positive"
+                value={dashboardData.analytics?.orders?.value || '0'}
+                change={dashboardData.analytics?.orders?.change || '+0%'}
+                changeType={dashboardData.analytics?.orders?.changeType || 'neutral'}
                 label="Total Orders"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <KPICard
-                type="visits"
-                value="8942"
-                change="+12.5%"
-                changeType="negative"
-                label="Store Visits"
+                  type="visits"
+                  value={dashboardData.analytics?.products?.value || '0'}
+                  change={dashboardData.analytics?.products?.change || '+0%'}
+                  changeType={dashboardData.analytics?.products?.changeType || 'neutral'}
+                  label="Total Products"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <KPICard
                 type="reviews"
-                value="28 New"
-                change="4.9 Avg"
-                changeType="neutral"
+                value={dashboardData.analytics?.reviews?.value || '0 New'}
+                change={dashboardData.analytics?.reviews?.change || '0'}
+                changeType={dashboardData.analytics?.reviews?.changeType || 'neutral'}
                 label="Reviews"
               />
             </Grid>
@@ -121,12 +152,12 @@ export default function Dashboard() {
 
 
           {/* Recent Orders and Top Products */}
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{ alignItems: 'stretch' }}>
             <Grid item xs={12} lg={8}>
-              <RecentOrders />
+              <RecentOrders orders={dashboardData.recentOrders} />
             </Grid>
-            <Grid item xs={12} lg={4} sx={{ml:"auto", transform: "translateX(-24px)"}}>
-              <TopProducts />
+            <Grid item xs={12} lg={4}>
+              <TopProducts products={dashboardData.topProducts} />
             </Grid>
           </Grid>
         </Container>

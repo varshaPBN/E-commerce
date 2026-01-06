@@ -34,7 +34,7 @@ const products = [
   },
 ];
 
-export default function TopProducts() {
+export default function TopProducts({products = []}) {
   return (
     <Box
       sx={{
@@ -43,6 +43,10 @@ export default function TopProducts() {
         p: 3,
         boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
         border: '1px solid #F0F0F0',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Typography
@@ -58,9 +62,10 @@ export default function TopProducts() {
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        {products.map((product, index) => (
+            {products.length > 0 ? (
+        products.map((product, index) => (
           <Box
-            key={index}
+            key={product._id || index}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -70,7 +75,7 @@ export default function TopProducts() {
             }}
           >
             <Avatar
-              src={product.image}
+              src={product.design || 'https://via.placeholder.com/60x60'}
               alt={product.name}
               sx={{
                 width: { xs: 50, md: 60 },
@@ -95,7 +100,7 @@ export default function TopProducts() {
                   color: '#666',
                 }}
               >
-                {product.sales}
+                {product.soldQuantity || 0} sales
               </Typography>
             </Box>
             <Typography
@@ -105,10 +110,15 @@ export default function TopProducts() {
                 color: '#3B2A1A',
               }}
             >
-              {product.revenue}
+              ${product.revenue || '0.00'}
             </Typography>
           </Box>
-        ))}
+        ))
+      ) : (
+        <Typography sx={{ textAlign: 'center', py: 4, color: '#666' }}>
+          No products yet
+        </Typography>
+      )}
       </Box>
     </Box>
   );
