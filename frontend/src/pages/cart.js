@@ -1,5 +1,5 @@
 // pages/cart.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -8,36 +8,98 @@ import {
   IconButton,
   Paper,
   Divider,
+  CircularProgress,
 } from "@mui/material";
-import { Delete, Add, Remove } from "@mui/icons-material";
+import { Delete, Add, Remove, Balance } from "@mui/icons-material";
 import ProductsHeader from "@/components/common/ProductsHeader";
 import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
+import { blue } from "@mui/material/colors";
+import axios from "axios";
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Customized Pen",
-      artist: "Kiara",
-      variant: "Blue Ink With Pink Tie",
-      price: 10,
-      quantity: 1,
-      image: "pink-tie.jpg",
-    },
-    {
-      id: 2,
-      name: "Naruto T Shirt",
-      artist: "SBC",
-      variant: "White Colored",
-      price: 200,
-      quantity: 1,
-      image: "product-image.png",
-    },
-  ]);
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
+  
+  // Get auth token from localStorage
+  const getAuthToken = () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setAuthError(true);
+        return null;
+      }
+      return token;
+    }
+    return null;
+  };
+
+  // Fetch cart items from API
+  const fetchCart = async () => {
+    try {
+      setLoading(true);
+      setAuthError(false);
+      const token = getAuthToken();
+      
+      if (!token) {
+        setAuthError(true);
+        return;
+      }
+
+      const response = await axios.get("/api/v1/get/cart/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const items = response.data.cart?.items || [];
+      const cartItems = items.map((item) => {
+        const product = item.productId;
+        const artist = product?.artistId;
+        
+        // Build variant string
+        const variant = [item.color, item.size]
+          .filter(Boolean)
+          .filter(v => v !== "None")
+          .join(" - ") || "Standard";
+
+        return {
+          id: item._id,
+          productId: product?._id || item.productId,
+          name: product?.name || "Product",
+          artist: artist?.name || artist?.storeName || "Unknown Artist",
+          variant,
+          price: product?.price || item.price / item.quantity,
+          quantity: item.quantity,
+          image: product?.design || "/products/default.png",
+          color: item.color,
+          size: item.size,
+        };
+      });
+
+      setCartItems(cartItems);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        setAuthError(true);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
+      } else if (error.response?.status === 404) {
+        setCartItems([]);
+      } else {
+        console.error("Error fetching cart:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
 
   const suggestedProducts = [
     {
+      id: "695bf20d4c3597dcfe31af5d",
       title: "Custom embroidered hat",
       description:
         "Custom embroidered hat means hats that are specially made or decorated with s...",
@@ -45,6 +107,7 @@ const CartPage = () => {
       image: "/products/hat.jpg",
     },
     {
+      id: "695bf20d4c3597dcfe31af5b",
       title: "Sunflower Soul Denim Jacket",
       description:
         "A face hidden behind flowers — bold, fearless, and beautifully untamed. This j...",
@@ -52,6 +115,7 @@ const CartPage = () => {
       image: "/products/jacket.jpg",
     },
     {
+      id: "695bf20d4c3597dcfe31af5c",
       title: "Purr-fect Cat Graphic T-Shirt",
       description:
         "Show off your love for cats with this fun front-print t-shirt. Made for cat lovers...",
@@ -60,18 +124,82 @@ const CartPage = () => {
     },
   ];
 
-  const updateQuantity = (id, delta) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    );
+  const updateQuantity = async (item, delta) => {
+    const newQuantity = item.quantity + delta;
+    if (newQuantity < 1) return;
+
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setAuthError(true);
+        return;
+      }
+
+      const action = delta > 0 ? "increase" : "decrease";
+      
+      await axios.patch(
+        `/api/v1/cart/item/${item.productId}?size=${item.size || ""}&color=${item.color || ""}`,
+        { action },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update local state optimistically
+      setCartItems((items) =>
+        items.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: newQuantity }
+            : cartItem
+        )
+      );
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      if (error.response?.status === 401) {
+        setAuthError(true);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
+      } else {
+        // Refresh cart on error
+        fetchCart();
+      }
+    }
   };
 
-  const removeItem = (id) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
+  const removeItem = async (item) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setAuthError(true);
+        return;
+      }
+      
+      await axios.delete(
+        `/api/v1/delete/cart/item/${item.productId}?size=${item.size || ""}&color=${item.color || ""}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update local state
+      setCartItems((items) => items.filter((cartItem) => cartItem.id !== item.id));
+    } catch (error) {
+      console.error("Error removing item:", error);
+      if (error.response?.status === 401) {
+        setAuthError(true);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+        }
+      } else {
+        // Refresh cart on error
+        fetchCart();
+      }
+    }
   };
 
   const subtotal = cartItems.reduce(
@@ -108,12 +236,46 @@ const CartPage = () => {
             >
               Your Cart
             </Typography>
-            <Typography variant="body2" sx={{ color: "#666", mb: 3 }}>
-              3 Items From Various Artists
-            </Typography>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {cartItems.map((item) => (
+            {loading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : authError ? (
+              <Box sx={{ py: 4, textAlign: "center" }}>
+                <Typography variant="h6" sx={{ color: "#d32f2f", mb: 2 }}>
+                  Authentication Required
+                </Typography>
+                <Typography variant="body1" sx={{ color: "#666", mb: 3 }}>
+                  Please log in to view your cart. Your session may have expired.
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    // Clear token and refresh page
+                    if (typeof window !== "undefined") {
+                      localStorage.removeItem("token");
+                      window.location.reload();
+                    }
+                  }}
+                  sx={{
+                    bgcolor: "#3D2817",
+                    color: "white",
+                    "&:hover": { bgcolor: "#2D1F12" },
+                  }}
+                >
+                  Refresh Page
+                </Button>
+              </Box>
+            ) : cartItems.length === 0 ? (
+              <Box sx={{ py: 4, textAlign: "center" }}>
+                <Typography variant="h6" sx={{ color: "#666" }}>
+                  Your cart is empty
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {cartItems.map((item) => (
                 <Paper
                   key={item.id}
                   elevation={0}
@@ -149,7 +311,7 @@ const CartPage = () => {
 
                   {/* Product Details */}
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5, color: "black", fontFamily: "Inter" }}>
                       {item.name}
                     </Typography>
                     <Typography variant="body2" sx={{ color: "#666", mb: 0.5 }}>
@@ -158,7 +320,7 @@ const CartPage = () => {
                     <Typography variant="body2" sx={{ color: "#666" }}>
                       {item.variant}
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "black", fontFamily: "Inter" }}>
                       ₹{item.price}
                     </Typography>
                   </Box>
@@ -174,7 +336,7 @@ const CartPage = () => {
                   >
                     <IconButton
                       size="small"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item)}
                       sx={{ alignSelf: "flex-end" }}
                     >
                       <Box
@@ -195,19 +357,20 @@ const CartPage = () => {
                     >
                       <IconButton
                         size="small"
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => updateQuantity(item, -1)}
+                        disabled={item.quantity <= 1}
                         sx={{ borderRadius: 0 }}
                       >
                         <Remove fontSize="small" />
                       </IconButton>
                       <Typography
-                        sx={{ px: 2, minWidth: 40, textAlign: "center" }}
+                        sx={{ px: 2, minWidth: 40, textAlign: "center", color: "black" }}
                       >
                         {item.quantity}
                       </Typography>
                       <IconButton
                         size="small"
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => updateQuantity(item, 1)}
                         sx={{ borderRadius: 0 }}
                       >
                         <Add fontSize="small" />
@@ -215,8 +378,9 @@ const CartPage = () => {
                     </Box>
                   </Box>
                 </Paper>
-              ))}
-            </Box>
+                ))}
+              </Box>
+            )}
 
             {/* You Might Also Like */}
             <Box sx={{ mt: 6 }}>
@@ -229,15 +393,18 @@ const CartPage = () => {
 
               <Box
                 sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
                   gap: 2,
-                  justifyContent: "flex-start", // or "center"
+                  "@media (max-width: 1200px)": {
+                    gridTemplateColumns: "repeat(3, minmax(200px, 1fr))",
+                  },
                 }}
               >
                 {suggestedProducts.map((product, index) => (
-                  <Box key={index} sx={{ width: 250 }}>
+                  <Box key={index}>
                     <ProductsCard
+                      id={product.id}
                       index={index}
                       image={product.image}
                       title={product.title}
@@ -265,45 +432,47 @@ const CartPage = () => {
               </Typography>
 
               {/* Order Items */}
-              <Box sx={{ mb: 3 }}>
-                {cartItems.map((item) => (
-                  <Box key={item.id} sx={{ display: "flex", gap: 2, mb: 3 }}>
-                    <Box
-                      sx={{
-                        width: 70,
-                        height: 70,
-                        borderRadius: 1,
-                        overflow: "hidden",
-                        bgcolor: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
+              {cartItems.length > 0 && (
+                <Box sx={{ mb: 3 }}>
+                  {cartItems.map((item) => (
+                    <Box key={item.id} sx={{ display: "flex", gap: 2, mb: 3 }}>
                       <Box
-                        component="img"
-                        src={item.image}
-                        sx={{ width: "100%" }}
-                      ></Box>
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="body1"
-                        sx={{ fontWeight: 600, mb: 0.5 }}
+                        sx={{
+                          width: 70,
+                          height: 70,
+                          borderRadius: 1,
+                          overflow: "hidden",
+                          bgcolor: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
                       >
-                        {item.name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: "#666" }}>
-                        By {item.artist}
+                        <Box
+                          component="img"
+                          src={item.image}
+                          sx={{ width: "100%" }}
+                        ></Box>
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant="body1"
+                          sx={{ fontWeight: 600, mb: 0.5, color: "black" }}
+                        >
+                          {item.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "#666" }}>
+                          By {item.artist}
+                        </Typography>
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: "black", fontFamily: "Inter" }}>
+                        ₹{item.price * item.quantity}
                       </Typography>
                     </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                      ₹{item.price}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+                  ))}
+                </Box>
+              )}
 
               <Divider sx={{ my: 3, bgcolor: "#C5BDB1" }} />
 
@@ -319,7 +488,7 @@ const CartPage = () => {
                   <Typography variant="body1" sx={{ color: "#666" }}>
                     Subtotal
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: "black", fontFamily: "Inter" }}>
                     ₹{subtotal}
                   </Typography>
                 </Box>
@@ -333,7 +502,7 @@ const CartPage = () => {
                   <Typography variant="body1" sx={{ color: "#666" }}>
                     Shipping
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: "black", fontFamily: "Inter" }}>
                     ₹{shipping}
                   </Typography>
                 </Box>
@@ -347,7 +516,7 @@ const CartPage = () => {
                   <Typography variant="body1" sx={{ color: "#666" }}>
                     Taxes
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: "black", fontFamily: "Inter"}}>
                     ₹{taxes}
                   </Typography>
                 </Box>
@@ -359,10 +528,10 @@ const CartPage = () => {
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}
               >
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "black", fontFamily: "Inter" }}>
                   Total
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: "black", fontFamily: "Inter" }}>
                   ₹{total}
                 </Typography>
               </Box>

@@ -1,6 +1,8 @@
 import { Box, Card, CardContent, IconButton, Typography } from "@mui/material";
+import { useRouter } from "next/router";
 
 export default function ProductsCard({
+  id,
   index,
   image,
   title,
@@ -9,9 +11,15 @@ export default function ProductsCard({
   isLiked,
   toggleHeart,
 }) {
+  
+  const router = useRouter();
+
+  function handleClick() {
+    router.push(`/product-view?productId=${id}`);
+  }
+
   return (
     <Card
-      key={index}
       elevation={0}
       sx={{
         borderRadius: "20px",
@@ -21,7 +29,7 @@ export default function ProductsCard({
         "&:hover": { transform: "translateY(-4px)" },
         height: "100%",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
       }}
     >
       <Box
@@ -32,10 +40,14 @@ export default function ProductsCard({
           width: "100%",
           height: 250,
           objectFit: "cover",
+          cursor: "pointer"
         }}
+        onClick={handleClick}
       />
-      <CardContent sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection:"column" }}>
-        <Typography sx={{ fontSize: "20px", fontWeight: 700, mb: 1 }}>
+      <CardContent
+        sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection: "column" }}
+      >
+        <Typography sx={{ fontSize: "20px", fontWeight: 700, mb: 1, color: "black" }}>
           {title}
         </Typography>
         {description && (
@@ -47,7 +59,7 @@ export default function ProductsCard({
               lineHeight: 1.5,
             }}
           >
-            {description}
+            {description.slice(0, 80)}...
           </Typography>
         )}
         {price && (
@@ -56,11 +68,11 @@ export default function ProductsCard({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              mt: "auto"
+              mt: "auto",
             }}
           >
-            <Typography sx={{ fontSize: "24px", fontWeight: 700 }}>
-              {price}
+            <Typography sx={{ fontSize: "24px", fontWeight: 700, color: "black" }}>
+              ₹{price}
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
               <IconButton
