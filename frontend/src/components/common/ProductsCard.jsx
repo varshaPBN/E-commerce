@@ -1,5 +1,8 @@
-import { Box, Card, CardContent, IconButton, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Card, CardContent, IconButton, Typography, Snackbar, Alert } from "@mui/material";
 import { useRouter } from "next/router";
+import axios from "axios";
+import { getAuthToken, isAuthenticated } from "@/utils/auth";
 
 export default function ProductsCard({
   id,
@@ -13,10 +16,75 @@ export default function ProductsCard({
 }) {
   
   const router = useRouter();
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   function handleClick() {
     router.push(`/product-view?productId=${id}`);
   }
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated()) {
+      setSnackbar({
+        open: true,
+        message: "Please log in to add items to cart",
+        severity: "warning",
+      });
+      setTimeout(() => router.push("/user-login"), 1500);
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: "Please log in to add items to cart",
+          severity: "error",
+        });
+        router.push("/user-login");
+        return;
+      }
+
+      const response = await axios.post(
+        "/api/v1/add/cart",
+        {
+          productId: id,
+          color: "None",
+          size: "None",
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        setSnackbar({
+          open: true,
+          message: "Item added to cart successfully!",
+          severity: "success",
+        });
+
+        // Wait a bit for the backend to process, then trigger cart count refresh
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("cartUpdated"));
+        }, 1000);
+      } else {
+        throw new Error("Unexpected response status");
+      }
+
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Failed to add item to cart",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <Card
@@ -88,7 +156,11 @@ export default function ProductsCard({
                   sx={{ width: 24, height: 24 }}
                 />
               </IconButton>
-              <IconButton size="small" sx={{ width: 32, height: 32 }}>
+              <IconButton 
+                size="small" 
+                sx={{ width: 32, height: 32 }}
+                onClick={handleAddToCart}
+              >
                 <Box
                   component="img"
                   src="/icons/Bag.png"
@@ -99,6 +171,22 @@ export default function ProductsCard({
           </Box>
         )}
       </CardContent>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 }

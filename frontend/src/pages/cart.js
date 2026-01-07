@@ -16,24 +16,12 @@ import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
 import { blue } from "@mui/material/colors";
 import axios from "axios";
+import { getAuthToken } from "@/utils/auth";
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
-  
-  // Get auth token from localStorage
-  const getAuthToken = () => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setAuthError(true);
-        return null;
-      }
-      return token;
-    }
-    return null;
-  };
 
   // Fetch cart items from API
   const fetchCart = async () => {
@@ -80,13 +68,8 @@ const CartPage = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         setAuthError(true);
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-        }
       } else if (error.response?.status === 404) {
         setCartItems([]);
-      } else {
-        console.error("Error fetching cart:", error);
       }
     } finally {
       setLoading(false);
@@ -156,12 +139,8 @@ const CartPage = () => {
         )
       );
     } catch (error) {
-      console.error("Error updating quantity:", error);
       if (error.response?.status === 401) {
         setAuthError(true);
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-        }
       } else {
         // Refresh cart on error
         fetchCart();
@@ -189,12 +168,8 @@ const CartPage = () => {
       // Update local state
       setCartItems((items) => items.filter((cartItem) => cartItem.id !== item.id));
     } catch (error) {
-      console.error("Error removing item:", error);
       if (error.response?.status === 401) {
         setAuthError(true);
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("token");
-        }
       } else {
         // Refresh cart on error
         fetchCart();
@@ -216,7 +191,7 @@ const CartPage = () => {
       <ProductsHeader />
 
       {/* Back Button */}
-      <BackButton />
+      <BackButton fallbackPath="/user-product-page" />
 
       {/* Main Content */}
       <Container maxWidth="lg" sx={{ mt: 3 }}>
@@ -252,11 +227,7 @@ const CartPage = () => {
                 <Button
                   variant="contained"
                   onClick={() => {
-                    // Clear token and refresh page
-                    if (typeof window !== "undefined") {
-                      localStorage.removeItem("token");
-                      window.location.reload();
-                    }
+                    window.location.reload();
                   }}
                   sx={{
                     bgcolor: "#3D2817",

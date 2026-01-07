@@ -12,6 +12,9 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import axios from "axios";
+import { Cookies } from "react-cookie";
+
+const cookies = new Cookies();
 
 //  import OTP modal
 import OtpModal from "@/components/signup/OtpModal";
@@ -83,6 +86,18 @@ export default function UserLogin() {
       });
 
       if (response.status === 200 && response.data.message === "OTP verified successfully") {
+        // Store JWT token in cookie using react-cookie
+        if (response.data.token) {
+          const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+          const expires = new Date(Date.now() + expiresIn);
+          cookies.set("authToken", response.data.token, {
+            path: "/",
+            expires: expires,
+            sameSite: "lax",
+            secure: window.location.protocol === "https:",
+          });
+        }
+        
         setSuccess("OTP verified successfully!");
         setOtpOpen(false);
         // Redirect after successful verification
@@ -210,8 +225,6 @@ export default function UserLogin() {
                 <Checkbox />
                 <Typography fontSize={13}>Remember me</Typography>
               </Box>
-
-              <Typography fontSize={13}>Forgot Password</Typography>
             </Box>
 
             {/* OTP trigger */}
