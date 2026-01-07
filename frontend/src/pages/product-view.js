@@ -43,7 +43,7 @@ export default function ProductView() {
       const response = await axios.get(`/api/v1/user/products/${productId}`);
       setProduct(response.data.product);
     } catch (error) {
-      console.log(error);
+      // Error handled silently - product will remain empty state
     }
   }
 
@@ -51,9 +51,8 @@ export default function ProductView() {
     try {
       const response = await axios.get(`/api/v1/${product.artistId}/products`);
       setRelatedProducts(response.data.products);
-      console.log(response);
     } catch (error) {
-      console.log(error);
+      // Error handled silently - related products will remain empty
     }
   }
 

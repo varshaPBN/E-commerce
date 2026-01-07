@@ -29,7 +29,6 @@ export default function ProductPage() {
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [likedProducts, setLikedProducts] = useState({});
-    const [cartItems, setCartItems] = useState([]);
     const [artistInfo, setArtistInfo] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
     const isUserAuthenticated = isAuthenticated();
@@ -59,6 +58,7 @@ export default function ProductPage() {
             } catch (error) {
                 console.error("Error fetching products:", error);
                 setProducts([]);
+                setAllProducts([]);
             } finally {
                 setLoading(false);
             }
@@ -164,70 +164,25 @@ export default function ProductPage() {
         router.push(`/product-view?productId=${product._id}`);
     };
 
-        {/* ================= CONTENT ================= */}
-        <Box sx={{ display: "flex", gap: 4 }}>
-          {/* ========== SIDEBAR ========== */}
-          <Box sx={{ width: 220 }}>
-            <Typography fontWeight={600} mb={2}>
-              Category
-            </Typography>
+    return (
+        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+            {/* ================= HEADER ================= */}
+            <ProductsHeader />
 
-            {[
-              "All",
-              "Clothing",
-              "Posters & Prints",
-              "Accessories",
-              "Home & Living",
-              "Limited Editions",
-            ].map((item) => (
-              <Box
-                key={item}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  cursor: "pointer",
-                }}
-                onClick={() => setSelectedCategory(item)}
-              >
-                <Checkbox size="small" checked={selectedCategory === item} />
-                <Typography fontSize={14}>{item}</Typography>
-              </Box>
-            ))}
-          </Box>
-
-          {/* ========== PRODUCT GRID ========== */}
-          <Box
-            sx={{
-              flex: 1,
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 3,
-            }}
-          >
-            {filteredProducts.map((product) => (
-              <Card
-                key={product.title}
-                sx={{
-                  borderRadius: 3,
-                  boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-                  position: "relative",
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={product.image}
-                  alt={product.title}
-                />
-
+            {/* ================= PAGE CONTENT ================= */}
+            <Box sx={{ px: 6, py: 3 }}>
+                {/* ================= HERO ================= */}
                 <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 20,
-                    right: 10,
-                    display: "flex",
-                    gap: 1,
-                  }}
+                    sx={{
+                        bgcolor: "#DED3BF",
+                        borderRadius: 4,
+                        px: 6,
+                        py: 4,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 4,
+                    }}
                 >
                     <Typography
                         variant="h4"
@@ -405,8 +360,6 @@ export default function ProductPage() {
                 </Alert>
             </Snackbar>
         </Box>
-      </Box>
-    </Box>
-  );
+    );
 }
 
