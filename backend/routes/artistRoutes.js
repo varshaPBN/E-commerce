@@ -1,6 +1,8 @@
 const mongoose = require("mongoose")
 const Artists = mongoose.model("artists")
 const jwt = require("jsonwebtoken");
+const sendOtpMail = require("../utils/mailer"); //otp
+const otpStore = new Map();
 
 const otpLength = 6;
 
@@ -17,7 +19,9 @@ module.exports = (app) => {
       }
       
       console.log("newOTP: ", newOTP);
+      await sendOtpMail(email, newOTP); //otp
       const artist = await Artists.findOne({ email });
+      
 
        if (!artist) {
         const response = await Artists.create({ email, otp: newOTP });
@@ -26,6 +30,7 @@ module.exports = (app) => {
         const response = await Artists.updateOne({ email }, { otp: newOTP });
         res.status(201).json({ message: "OTP Sent Successfully", response });
       }
+      
     } catch (error) {
       console.log(error);
       res.status(500).send({ message: error.message });
@@ -117,6 +122,10 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
         const { email, otp } = req.body;
   
         const user = await Artists.findOne({ email });
+
+        if (!user) {
+        return res.status(404).json({ message: "User not found" });
+        }
   
         if (user && user.otp === otp) {
           const payload = {
@@ -127,8 +136,12 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
           const token = jwt.sign(payload, process.env.JWT_SECRET, {
             expiresIn: process.env.JWT_EXPIRES_IN,
           });
-  
+          
+          await Artists.updateOne({ email }, { otp: null });
+
           res.status(200).json({ message: "Login Success", token });
+        }else{
+            return res.status(400).json({ message: "Invalid OTP" });
         }
       } catch (error) {
         console.log(error);

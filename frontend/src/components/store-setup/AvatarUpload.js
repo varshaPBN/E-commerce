@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import EditIcon from '@mui/icons-material/Edit';
 
-export default function AvatarUpload() {
+export default function AvatarUpload({ onChange }) {
   return (
     <Box sx={{ position: 'relative', mb: { xs: 3, md: 4 }, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Box
@@ -12,6 +12,7 @@ export default function AvatarUpload() {
         accept="image/png,image/jpeg"
         sx={{ display: 'none' }}
         id="avatar-upload"
+        onChange={onChange}
       />
       <Box
         component="label"

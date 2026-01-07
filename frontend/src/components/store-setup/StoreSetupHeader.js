@@ -14,29 +14,8 @@ export default function StoreSetupHeader() {
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              borderRadius: 1,
-              background: 'linear-gradient(135deg, #9C27B0 0%, #E91E63 100%)',
-              mr: 1,
-            }}
-          />
-          <Box
-            component="span"
-            sx={{
-              fontFamily: "'Playfair Display'",
-              fontSize: 24,
-              fontWeight: 700,
-              background: 'linear-gradient(135deg, #9C27B0 0%, #E91E63 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            Artloom
-          </Box>
+          
+          
         </Box>
         <Link
           href="/sign-up"

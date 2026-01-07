@@ -2,40 +2,86 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Box, TextField, Button, Typography } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import axios from 'axios';
 
-export default function StoreSetupForm() {
+export default function StoreSetupForm({avatar}) {
   const router = useRouter();
   const [storeName, setStoreName] = useState('');
   const [domain, setDomain] = useState('');
   const [artistName, setArtistName] = useState('');
+  const [logo, setLogo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   // Check if router is ready
   const isRouterReady = router.isReady !== false;
 
-  const handleFinish = () => {
-    // Handle form submission
-    console.log('Store setup:', { storeName, domain, artistName });
-    console.log('Navigating to dashboard...');
-    console.log('Router ready:', isRouterReady);
-    
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result); // base64 data URL
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleFinish = async () => {
     if (!isFormValid) {
       console.warn('Form is not valid, cannot proceed');
       return;
     }
-    
-    // Use router.push with error handling
-    if (isRouterReady) {
-      router.push('/dashboard').then(() => {
-        console.log('Navigation successful');
-      }).catch((error) => {
-        console.error('Router navigation failed:', error);
-        // Fallback to window.location
-        window.location.href = '/dashboard';
-      });
-    } else {
-      // If router not ready, use window.location directly
-      console.log('Router not ready, using window.location');
-      window.location.href = '/dashboard';
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Get email from token stored in localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Session expired. Please sign up again.');
+        setLoading(false);
+        return;
+      }
+
+      // Decode JWT token to get email (simple base64 decode)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const email = payload.email;
+
+      // Prepare data to send
+      const profileData = {
+        email,
+        name: artistName,
+        storeName,
+        domain,
+        logo: logo || '',
+        avatar: avatar || ''
+      };
+
+      // Make API call
+      const response = await axios.post('/api/v1/artist/signup/profile', profileData);
+
+      if (response.status === 200) {
+        // Navigate to dashboard after successful submission
+        if (isRouterReady) {
+          router.push('/dashboard').then(() => {
+            console.log('Navigation successful');
+          }).catch((error) => {
+            console.error('Router navigation failed:', error);
+            window.location.href = '/dashboard';
+          });
+        } else {
+          window.location.href = '/dashboard';
+        }
+      } else {
+        setError(response.data.message || 'Failed to save profile');
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || 'Network error. Please try again.');
+      console.error('Error saving profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -158,6 +204,7 @@ export default function StoreSetupForm() {
           accept="image/png,image/jpeg"
           sx={{ display: 'none' }}
           id="logo-upload"
+          onChange={handleLogoChange}
         />
         <Box
           component="label"
