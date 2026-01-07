@@ -30,6 +30,7 @@ export default function ProductPage() {
     const [loading, setLoading] = useState(true);
     const [likedProducts, setLikedProducts] = useState({});
     const [artistInfo, setArtistInfo] = useState(null);
+    const [selectedCategories, setSelectedCategories] = useState(["All"]);
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
     const isUserAuthenticated = isAuthenticated();
 
@@ -67,21 +68,35 @@ export default function ProductPage() {
         fetchProducts();
     }, [artistId]);
 
-    // Filter products based on search query
+    // Filter products based on search query and category
     useEffect(() => {
+        let filtered = [...allProducts];
+
+        // Apply category filter
+        const hasAllSelected = selectedCategories.includes("All");
+        if (!hasAllSelected && selectedCategories.length > 0) {
+            filtered = filtered.filter((product) => {
+                const productCategory = product.category?.toLowerCase() || "";
+                // Check if product category matches any of the selected categories
+                return selectedCategories.some((selectedCat) => 
+                    productCategory === selectedCat.toLowerCase()
+                );
+            });
+        }
+
+        // Apply search filter
         if (search && search.trim()) {
             const searchLower = search.toLowerCase().trim();
-            const filtered = allProducts.filter((product) => {
+            filtered = filtered.filter((product) => {
                 const nameMatch = product.name?.toLowerCase().includes(searchLower);
                 const descMatch = product.description?.toLowerCase().includes(searchLower);
                 const categoryMatch = product.category?.toLowerCase().includes(searchLower);
                 return nameMatch || descMatch || categoryMatch;
             });
-            setProducts(filtered);
-        } else {
-            setProducts(allProducts);
         }
-    }, [search, allProducts]);
+
+        setProducts(filtered);
+    }, [search, selectedCategories, allProducts]);
 
     const toggleLike = (productId) => {
         // Check authentication before allowing like
@@ -207,17 +222,58 @@ export default function ProductPage() {
                         </Typography>
 
                         {[
-                            "Clothing",
-                            "Posters & Prints",
+                            "All",
+                            "Apparel",
                             "Accessories",
-                            "Home & Living",
-                            "Limited Editions",
-                        ].map((item) => (
-                            <Box key={item} sx={{ display: "flex", alignItems: "center" }}>
-                                <Checkbox size="small" />
-                                <Typography fontSize={14}>{item}</Typography>
-                            </Box>
-                        ))}
+                            "Drinkware",
+                            "Limited Edition",
+                        ].map((item) => {
+                            const isChecked = selectedCategories.includes(item);
+                            
+                            const handleCategoryToggle = () => {
+                                if (item === "All") {
+                                    // If "All" is clicked, toggle it and clear other selections
+                                    if (isChecked) {
+                                        setSelectedCategories([]);
+                                    } else {
+                                        setSelectedCategories(["All"]);
+                                    }
+                                } else {
+                                    // For other categories, toggle them individually
+                                    setSelectedCategories((prev) => {
+                                        // Remove "All" if it's selected when selecting a specific category
+                                        const withoutAll = prev.filter(cat => cat !== "All");
+                                        
+                                        if (isChecked) {
+                                            // Uncheck: remove this category
+                                            return withoutAll.filter(cat => cat !== item);
+                                        } else {
+                                            // Check: add this category
+                                            return [...withoutAll, item];
+                                        }
+                                    });
+                                }
+                            };
+
+                            return (
+                                <Box 
+                                    key={item} 
+                                    sx={{ 
+                                        display: "flex", 
+                                        alignItems: "center",
+                                        cursor: "pointer",
+                                    }}
+                                    onClick={handleCategoryToggle}
+                                >
+                                    <Checkbox 
+                                        size="small" 
+                                        checked={isChecked}
+                                        onChange={handleCategoryToggle}
+                                    />
+                                    <Typography fontSize={14}>{item}</Typography>
+                                </Box>
+                            );
+                        })}
 
                         <Typography
                             fontSize={13}
@@ -258,9 +314,19 @@ export default function ProductPage() {
                                 }}
                             >
                                 <Typography color="text.secondary">
-                                    {search && search.trim()
-                                        ? `No products found for "${search}"`
-                                        : "No products available"}
+                                    {(() => {
+                                        const hasFilters = (search && search.trim()) || 
+                                                         (selectedCategories.length > 0 && !selectedCategories.includes("All"));
+                                        
+                                        if (hasFilters) {
+                                            const searchText = search && search.trim() ? ` for "${search}"` : "";
+                                            const categoryText = selectedCategories.length > 0 && !selectedCategories.includes("All")
+                                                ? ` in ${selectedCategories.join(", ")}`
+                                                : "";
+                                            return `No products found${searchText}${categoryText}`;
+                                        }
+                                        return "No products available";
+                                    })()}
                                 </Typography>
                             </Box>
                         ) : (
