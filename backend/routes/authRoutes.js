@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const users = mongoose.model("users");
 const sendOtpMail = require("../utils/mailer"); //otp
+const jwt = require("jsonwebtoken");
 const otpStore = new Map();
 module.exports = (app) => {
     //add users
@@ -61,7 +62,7 @@ module.exports = (app) => {
 
   // verify otp
 
-  app.post("/api/v1/verify-otp", (req, res) => {
+  app.post("/api/v1/verify-otp", async (req, res) => {
     const { email, otp } = req.body;
 
     const record = otpStore.get(email);
@@ -78,8 +79,31 @@ module.exports = (app) => {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    otpStore.delete(email);
-    res.json({ message: "OTP verified successfully" });
+    try {
+      // Find or create user
+      let user = await users.findOne({ email });
+      
+      if (!user) {
+        // Create new user if doesn't exist
+        user = await users.create({ email });
+      }
+
+      // Generate JWT token
+      const payload = {
+        id: user._id.toString(),
+        email: user.email,
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+      });
+
+      otpStore.delete(email);
+      res.json({ message: "OTP verified successfully", token });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error during verification" });
+    }
   });
 
 };

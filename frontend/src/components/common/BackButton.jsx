@@ -1,12 +1,33 @@
 import { ArrowBack } from "@mui/icons-material";
 import { Button, Container } from "@mui/material";
+import { useRouter } from "next/router";
 
-export default function BackButton() {
+export default function BackButton({ fallbackPath = "/" }) {
+  const router = useRouter();
+
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      // If no history, navigate to fallback path or home
+      router.push(fallbackPath);
+    }
+  };
+
   return (
     <Container maxWidth="xl" sx={{ px: 4, mt: 2.5, mb: 4.5 }}>
       <Button
         startIcon={<ArrowBack />}
-        sx={{ color: "#333", textTransform: "none", fontSize: 16 }}
+        onClick={handleBack}
+        sx={{ 
+          color: "#333", 
+          textTransform: "none", 
+          fontSize: 16,
+          "&:hover": {
+            backgroundColor: "rgba(0, 0, 0, 0.04)",
+          },
+        }}
       >
         Back
       </Button>

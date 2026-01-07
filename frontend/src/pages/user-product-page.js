@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import {
     Box,
     Typography,
@@ -9,6 +10,7 @@ import {
     Divider,
     Avatar,
     IconButton,
+    CircularProgress,
 } from "@mui/material";
 
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -16,21 +18,150 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 
 import ProductsHeader from "@/components/common/UserProductsHeader";
+import { isAuthenticated, getAuthToken } from "@/utils/auth";
+import axios from "axios";
+import { Snackbar, Alert } from "@mui/material";
 
 export default function ProductPage() {
+    const router = useRouter();
+    const { artistId, search } = router.query;
+    const [products, setProducts] = useState([]);
+    const [allProducts, setAllProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [likedProducts, setLikedProducts] = useState({});
+    const [cartItems, setCartItems] = useState([]);
+    const [artistInfo, setArtistInfo] = useState(null);
+    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+    const isUserAuthenticated = isAuthenticated();
 
-    const toggleLike = (title) => {
+    // Fetch products from backend
+    useEffect(() => {
+        const fetchProducts = async () => {
+            if (!artistId) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const response = await axios.get(`/api/v1/${artistId}/products`, {
+                    validateStatus: () => true
+                });
+
+                if (response.status === 200 && response.data.products) {
+                    setAllProducts(response.data.products);
+                    setProducts(response.data.products);
+                } else {
+                    console.error("Failed to fetch products:", response.data?.message);
+                    setProducts([]);
+                    setAllProducts([]);
+                }
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                setProducts([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, [artistId]);
+
+    // Filter products based on search query
+    useEffect(() => {
+        if (search && search.trim()) {
+            const searchLower = search.toLowerCase().trim();
+            const filtered = allProducts.filter((product) => {
+                const nameMatch = product.name?.toLowerCase().includes(searchLower);
+                const descMatch = product.description?.toLowerCase().includes(searchLower);
+                const categoryMatch = product.category?.toLowerCase().includes(searchLower);
+                return nameMatch || descMatch || categoryMatch;
+            });
+            setProducts(filtered);
+        } else {
+            setProducts(allProducts);
+        }
+    }, [search, allProducts]);
+
+    const toggleLike = (productId) => {
+        // Check authentication before allowing like
+        if (!isUserAuthenticated) {
+            router.push("/user-login");
+            return;
+        }
         setLikedProducts((prev) => ({
             ...prev,
-            [title]: !prev[title],
+            [productId]: !prev[productId],
         }));
     };
 
-    const [cartItems, setCartItems] = useState([]);
+    const addToCart = async (product) => {
+        // Check authentication before adding to cart
+        if (!isUserAuthenticated) {
+            router.push("/user-login");
+            return;
+        }
 
-    const addToCart = (product) => {
-        setCartItems((prev) => [...prev, product]);
+        try {
+            const token = getAuthToken();
+            if (!token) {
+                setSnackbar({
+                    open: true,
+                    message: "Please log in to add items to cart",
+                    severity: "error",
+                });
+                router.push("/user-login");
+                return;
+            }
+
+            // Add to cart with default values (can be enhanced later with size/color selection)
+            const response = await axios.post(
+                "/api/v1/add/cart",
+                {
+                    productId: product._id,
+                    color: "None",
+                    size: "None",
+                    quantity: 1,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (response.status === 200 || response.status === 201) {
+                setSnackbar({
+                    open: true,
+                    message: "Item added to cart successfully!",
+                    severity: "success",
+                });
+
+                // Wait a bit for the backend to process, then trigger cart count refresh
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent("cartUpdated"));
+                }, 1000);
+            } else {
+                throw new Error("Unexpected response status");
+            }
+
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: error.response?.data?.message || "Failed to add item to cart",
+                severity: "error",
+            });
+        }
+    };
+
+    // Handle product card click - redirect guests to login
+    const handleProductClick = (product) => {
+        if (!isUserAuthenticated) {
+            router.push("/user-login");
+            return;
+        }
+        // Navigate to product detail page
+        router.push(`/product-view?productId=${product._id}`);
     };
 
     return (
@@ -58,10 +189,13 @@ export default function ProductPage() {
                         fontWeight={700}
                         sx={{ fontFamily: "Playfair Display" }}
                     >
-                        Marcus Chen’s Collection
+                        {artistInfo?.storeName || artistInfo?.name || "Artist Collection"}
                     </Typography>
 
-                    <Avatar src="/creator.png" sx={{ width: 80, height: 80 }} />
+                    <Avatar 
+                        src={artistInfo?.profilePicture || "/creator.png"} 
+                        sx={{ width: 80, height: 80 }} 
+                    />
                 </Box>
 
                 {/* ================= CONTENT ================= */}
@@ -103,123 +237,129 @@ export default function ProductPage() {
                             gap: 3,
                         }}
                     >
-                        {products.map((product) => (
-                            <Card
-                                key={product.title}
+                        {loading ? (
+                            <Box
                                 sx={{
-                                    borderRadius: 3,
-                                    boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
-                                    position: "relative",
+                                    gridColumn: "1 / -1",
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    py: 8,
                                 }}
                             >
-                                <CardMedia
-                                    component="img"
-                                    height="200"
-                                    image={product.image}
-                                    alt={product.title}
-                                />
-
-
-                                <Box
+                                <CircularProgress />
+                            </Box>
+                        ) : products.length === 0 ? (
+                            <Box
+                                sx={{
+                                    gridColumn: "1 / -1",
+                                    textAlign: "center",
+                                    py: 8,
+                                }}
+                            >
+                                <Typography color="text.secondary">
+                                    {search && search.trim()
+                                        ? `No products found for "${search}"`
+                                        : "No products available"}
+                                </Typography>
+                            </Box>
+                        ) : (
+                            products.map((product) => (
+                                <Card
+                                    key={product._id}
+                                    onClick={() => handleProductClick(product)}
                                     sx={{
-                                        position: "absolute",
-                                        bottom: 20,
-                                        right: 10,
-                                        display: "flex",
-                                        gap: 1,
+                                        borderRadius: 3,
+                                        boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                                        position: "relative",
+                                        cursor: "pointer",
+                                        transition: "transform 0.2s, box-shadow 0.2s",
+                                        "&:hover": {
+                                            transform: "translateY(-4px)",
+                                            boxShadow: "0 12px 24px rgba(0,0,0,0.15)",
+                                        },
                                     }}
                                 >
-                                    <IconButton
-                                        onClick={() => toggleLike(product.title)}
-                                        sx={{ bgcolor: "#fff", "&:hover": { bgcolor: "#fff" } }}
+                                    <CardMedia
+                                        component="img"
+                                        height="200"
+                                        image={product.design || "/placeholder.png"}
+                                        alt={product.name}
+                                        sx={{ pointerEvents: "none" }}
+                                    />
+
+                                    <Box
+                                        sx={{
+                                            position: "absolute",
+                                            bottom: 20,
+                                            right: 10,
+                                            display: "flex",
+                                            gap: 1,
+                                        }}
                                     >
-                                        {likedProducts[product.title] ? (
-                                            <FavoriteIcon sx={{ color: "red" }} />
-                                        ) : (
-                                            <FavoriteBorderIcon />
-                                        )}
-                                    </IconButton>
+                                        <IconButton
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleLike(product._id);
+                                            }}
+                                            sx={{ bgcolor: "#fff", "&:hover": { bgcolor: "#fff" } }}
+                                        >
+                                            {likedProducts[product._id] ? (
+                                                <FavoriteIcon sx={{ color: "red" }} />
+                                            ) : (
+                                                <FavoriteBorderIcon />
+                                            )}
+                                        </IconButton>
 
-                                    <IconButton
-                                        onClick={() => addToCart(product)}
-                                        sx={{ bgcolor: "#fff", "&:hover": { bgcolor: "#fff" } }}
-                                    >
-                                        <ShoppingCartOutlinedIcon />
-                                    </IconButton>
-                                </Box>
+                                        <IconButton
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                addToCart(product);
+                                            }}
+                                            sx={{ bgcolor: "#fff", "&:hover": { bgcolor: "#fff" } }}
+                                        >
+                                            <ShoppingCartOutlinedIcon />
+                                        </IconButton>
+                                    </Box>
 
-                                <CardContent>
-                                    <Typography fontWeight={600} fontSize={14}>
-                                        {product.title}
-                                    </Typography>
+                                    <CardContent>
+                                        <Typography fontWeight={600} fontSize={14}>
+                                            {product.name}
+                                        </Typography>
 
-                                    <Typography fontSize={12} color="text.secondary" mb={1}>
-                                        {product.desc}
-                                    </Typography>
+                                        <Typography fontSize={12} color="text.secondary" mb={1}>
+                                            {product.description || product.category}
+                                        </Typography>
 
-                                    <Divider sx={{ my: 2}} />
+                                        <Divider sx={{ my: 2}} />
 
-                                    <Typography fontWeight={600}>
-                                        ₹{product.price}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                        <Typography fontWeight={600}>
+                                            ₹{product.price}
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
                     </Box>
                 </Box>
             </Box>
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            >
+                <Alert
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    severity={snackbar.severity}
+                    sx={{ width: "100%" }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 }
 
-/* ================= MOCK DATA ================= */
-const products = [
-    {
-        title: "Customized Naruto T-shirt",
-        desc: "A fashionable t-shirt with anime print",
-        price: 299,
-        image: "/Naruto.png",
-    },
-    {
-        title: "Custom embroidered hat",
-        desc: "Custom embroidered hat made for you",
-        price: 149,
-        image: "/cap.png",
-    },
-    {
-        title: "Sunflower Soul Denim Jacket",
-        desc: "A denim jacket with sunflower design",
-        price: 500,
-        image: "/jacket.png",
-    },
-    {
-        title: "Pure-fect Cat Graphic T-shirt",
-        desc: "Fun cat graphic t-shirt",
-        price: 149,
-        image: "/tshirt.png",
-    },
-    {
-        title: "Best Friends Forever Personalized Mug",
-        desc: "Custom mug for best friends",
-        price: 299,
-        image: "/p5.png",
-    },
-    {
-        title: "Creator Edition Streetwear Hoodie",
-        desc: "Premium hoodie for creators",
-        price: 699,
-        image: "/p6.png",
-    },
-    {
-        title: "Abstract Coffee Art Print",
-        desc: "Abstract art for coffee lovers",
-        price: 199,
-        image: "/p7.png",
-    },
-    {
-        title: "Capture the Moment T-shirt",
-        desc: "Minimal typography t-shirt",
-        price: 299,
-        image: "/p8.png",
-    },
-];

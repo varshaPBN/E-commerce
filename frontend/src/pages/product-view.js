@@ -13,6 +13,8 @@ import {
   Avatar,
   Rating,
   Paper,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import ProductsHeader from "@/components/common/ProductsHeader";
@@ -20,9 +22,12 @@ import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
+import { getAuthToken, isAuthenticated } from "@/utils/auth";
 
 export default function ProductView() {
   const productId = useSearchParams().get("productId");
+  const router = useRouter();
 
   const [product, setProduct] = useState({});
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -31,6 +36,7 @@ export default function ProductView() {
   const [isLiked, setLiked] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [deliveryDate, setDeliveryDate] = useState("December 21, 2025");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   async function fetchProduct(productId) {
     try {
@@ -52,19 +58,59 @@ export default function ProductView() {
   }
 
   async function handleAddToCart(productId, color, size, quantity) {
+    // Check authentication
+    if (!isAuthenticated()) {
+      setSnackbar({
+        open: true,
+        message: "Please log in to add items to cart",
+        severity: "warning",
+      });
+      setTimeout(() => router.push("/user-login"), 1500);
+      return;
+    }
+
     try {
+      const token = getAuthToken();
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: "Please log in to add items to cart",
+          severity: "error",
+        });
+        router.push("/user-login");
+        return;
+      }
+
       const response = await axios.post(
         "/api/v1/add/cart",
         { productId, color, size, quantity },
         {
           headers: {
-            Authorization:
-              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NTEwZTYzYjgxM2Y2NWI5ZGE0MzliZSIsImVtYWlsIjoiYWJjQGdtYWlsLmNvbSIsImlhdCI6MTc2NzYzNzIzNSwiZXhwIjoxNzY4MjQyMDM1fQ.DPvnNx13u4EOgg4sz6JBGQ2jhi_QtB3X9xAWNhWaFC8",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
+
+      if (response.status === 200 || response.status === 201) {
+        setSnackbar({
+          open: true,
+          message: "Item added to cart successfully!",
+          severity: "success",
+        });
+
+        // Trigger cart count refresh in header
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("cartUpdated"));
+        }, 1000);
+      } else {
+        throw new Error("Unexpected response status");
+      }
     } catch (error) {
-      console.log(error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Failed to add item to cart",
+        severity: "error",
+      });
     }
   }
 
@@ -117,7 +163,7 @@ export default function ProductView() {
       <ProductsHeader />
 
       {/* Back Button */}
-      <BackButton />
+      <BackButton fallbackPath="/user-product-page" />
 
       {/* Product Section */}
       <Container maxWidth="xl" sx={{ mb: 7, px: "60px !important" }}>
@@ -562,6 +608,22 @@ export default function ProductView() {
             ))}
         </Box>
       </Container>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

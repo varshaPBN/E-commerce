@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
   Box,
@@ -20,6 +20,7 @@ import ProductsHeader from "@/components/common/ProductsHeader";
 export default function ProductPage() {
   const [likedProducts, setLikedProducts] = useState({});
   const router = useRouter();
+  const { search } = router.query;
 
   const toggleLike = (title) => {
     setLikedProducts((prev) => ({
@@ -27,6 +28,19 @@ export default function ProductPage() {
       [title]: !prev[title],
     }));
   };
+
+  // Filter products based on search query
+  const filteredProducts = useMemo(() => {
+    if (!search || !search.trim()) {
+      return products;
+    }
+    const searchLower = search.toLowerCase().trim();
+    return products.filter((product) => {
+      const titleMatch = product.title?.toLowerCase().includes(searchLower);
+      const descMatch = product.desc?.toLowerCase().includes(searchLower);
+      return titleMatch || descMatch;
+    });
+  }, [search]);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
@@ -98,9 +112,24 @@ export default function ProductPage() {
               gap: 3,
             }}
           >
-            {products.map((product) => (
-              <Card
-                key={product.title}
+            {filteredProducts.length === 0 ? (
+              <Box
+                sx={{
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  py: 8,
+                }}
+              >
+                <Typography color="text.secondary">
+                  {search && search.trim()
+                    ? `No products found for "${search}"`
+                    : "No products available"}
+                </Typography>
+              </Box>
+            ) : (
+              filteredProducts.map((product) => (
+                <Card
+                  key={product.title}
                 onClick={() => router.push("/user-login")}
                 sx={{
                   borderRadius: 3,
@@ -158,7 +187,8 @@ export default function ProductPage() {
                   </Typography>
                 </CardContent>
               </Card>
-            ))}
+              ))
+            )}
           </Box>
         </Box>
       </Box>
