@@ -14,16 +14,4 @@ export default function UserLoginPage() {
 
 
 
-// import { ThemeProvider } from "@mui/material/styles";
-// import CssBaseline from "@mui/material/CssBaseline";
-// import UserLogin from "@/components/UserLogin";
-// import theme from "@/style/mui/theme";
 
-// export default function UserLoginPage() {
-//   return (
-//     <ThemeProvider theme={theme}>
-//       <CssBaseline />
-//       <UserLogin />
-//     </ThemeProvider>
-//   );
-// }

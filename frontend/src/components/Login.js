@@ -11,9 +11,60 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useRouter } from "next/router";
+import { useState } from "react";
+import axios from "axios";
 
 export default function Login() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [otp, setOTP] = useState("");
+  const [step, setStep] = useState(1); // 1 = email, 2 = otp
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSendOTP = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const response = await axios.post(`${API_URL}/api/v1/artist/login`, {
+        email
+      });
+      
+      console.log("OTP sent:", response.data.message);
+      setStep(2); // Move to OTP verification step
+      
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const response = await axios.post(`${API_URL}/api/v1/artist/verify-otp`, {
+        email,
+        otp
+      });
+      
+      // Store token in localStorage
+      localStorage.setItem("artistToken", response.data.token);
+      
+      // Redirect to dashboard
+      router.push("/dashboard");
+      
+    } catch (err) {
+      setError(err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <Box sx={{ minHeight: "100vh", p: 4 }}>
       {/* HEADER */}
@@ -26,22 +77,16 @@ export default function Login() {
           mb: 4,
         }}
       >
-        {/* <img
-          src="/logo (2).png"
-          alt="Artloom"
-          style={{ height: 36 }}
-          
-        /> */}
 
         {/* Logo */}
-          <Box
-            component="img"
-            src="/logo.png"
-            alt="Artloom Logo"
-            sx={{
-              height: "60px",
-              cursor: "pointer",
-            }} />
+        <Box
+          component="img"
+          src="/logo.png"
+          alt="Artloom Logo"
+          sx={{
+            height: "60px",
+            cursor: "pointer",
+          }} />
 
         <Typography fontSize={14} color="text.secondary">
           Need Help?
@@ -71,16 +116,6 @@ export default function Login() {
             ← Back
           </Typography>
 
-          <Chip
-            icon={<LockOutlinedIcon fontSize="small" />}
-            label="Secure access · Magic link sent"
-            sx={{
-              bgcolor: "#fff",
-              fontSize: 12,
-              mb: 3,
-              borderRadius: 2,
-            }}
-          />
 
           <Card sx={{ width: 300, mx: "auto", borderRadius: 4 }}>
             <Box sx={{ position: "relative" }}>
@@ -109,7 +144,7 @@ export default function Login() {
               />
             </Box>
 
-            <CardContent>
+            {/* <CardContent>
               <Typography fontWeight={600}>Abstract Soul</Typography>
               <Typography fontSize={12} color="text.secondary">
                 Your Store Preview
@@ -120,13 +155,36 @@ export default function Login() {
               <Typography fontSize={12} color="red">
                 Manage
               </Typography>
+            </CardContent> */}
+
+            <CardContent>
+              <Typography fontWeight={600}>Abstract Soul</Typography>
+
+              <Typography fontSize={12} color="text.secondary">
+                Your Store Preview
+              </Typography>
+
+              {/* Live + Manage in one line */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                <Typography fontSize={12} color="green">
+                  ● Live
+                </Typography>
+
+                <Typography
+                  fontSize={12}
+                  color="red"
+                  sx={{ cursor: "pointer",ml:20 }}
+                >
+                  Manage
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Box>
 
         {/* RIGHT PANEL */}
         <Box sx={{ width: "55%", p: 6 }}>
-          <Typography variant="h4" fontWeight={600} mb={1}>
+          <Typography variant="h4" fontWeight={600} mb={1} >
             Artist Login
           </Typography>
 
@@ -139,28 +197,74 @@ export default function Login() {
             Enter your email to receive a secure magic login link.
           </Typography>
 
-          <TextField
-            fullWidth
-            label="Email address"
-            placeholder="you@example.com"
-            InputProps={{
-              startAdornment: <MailOutlineIcon sx={{ mr: 1 }} />,
-            }}
-            sx={{ mb: 4, maxWidth: 420 }}
-          />
+                    {step === 1 ? (
+            // Email input
+            <TextField
+              fullWidth
+              label="Email address"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              InputProps={{
+                startAdornment: <MailOutlineIcon sx={{ mr: 1 }} />,
+              }}
+              sx={{ mb: 4, maxWidth: 420 }}
+            />
+          ) : (
+            // OTP input
+            <TextField
+              fullWidth
+              label="Enter OTP"
+              placeholder="6-digit code"
+              value={otp}
+              onChange={(e) => setOTP(e.target.value)}
+              InputProps={{
+                startAdornment: <LockOutlinedIcon sx={{ mr: 1 }} />,
+              }}
+              sx={{ mb: 2, maxWidth: 420 }}
+            />
+          )}
+
+          {/* ADD error message display */}
+          {error && (
+            <Typography color="error" fontSize={14} sx={{ mb: 2, maxWidth: 420 }}>
+              {error}
+            </Typography>
+          )}
 
           <Button 
+          fullWidth
+          variant="contained"
+          disabled={loading || (step === 1 ? !email : !otp)}
+          onClick={step === 1 ? handleSendOTP : handleVerifyOTP}
+          sx={{
+            py: 1.6,
+            borderRadius: 8,
+            textTransform: "none",
+            maxWidth: 420,
+          }}
+        >
+          {loading 
+            ? "Loading..." 
+            : step === 1 
+            ? "Continue with Email →" 
+            : "Verify OTP →"
+          }
+        </Button>
+
+        {step === 2 && (
+          <Button
             fullWidth
-            variant="contained"
+            onClick={() => setStep(1)}
             sx={{
-              py: 1.6,
-              borderRadius: 8,
-              textTransform: "none",
+              mt: 2,
               maxWidth: 420,
+              textTransform: "none",
             }}
           >
-            Continue with Email →
+            ← Change Email
           </Button>
+         )}
         </Box>
       </Card>
     </Box>

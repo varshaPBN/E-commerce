@@ -72,9 +72,22 @@ module.exports = (app) => {
         ? ((recentOrders.length - previousOrders.length) / previousOrders.length * 100).toFixed(1)
         : 0;
 
-      // Get artist info for store visits (mock data for now)
-      const artist = await Artists.findById(artistId);
-      const storeVisits = Math.floor(Math.random() * 10000); // Replace with actual analytics
+        // Get total products count for artist
+        const totalProducts = await Product.countDocuments({ artistId });
+
+        const recentProducts = await Product.countDocuments({
+        artistId,
+        createdAt: { $gte: thirtyDaysAgo }
+        });
+
+        const previousProducts = await Product.countDocuments({
+        artistId,
+        createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
+        });
+
+        const productsChange = previousProducts > 0
+        ? ((recentProducts - previousProducts) / previousProducts * 100).toFixed(1)
+        : recentProducts > 0 ? '100.0' : '0';
 
       res.status(200).json({
         success: true,
@@ -89,10 +102,10 @@ module.exports = (app) => {
             change: `${orderChange >= 0 ? '+' : ''}${orderChange}%`,
             changeType: orderChange >= 0 ? 'positive' : 'negative'
           },
-          visits: {
-            value: storeVisits,
-            change: '+8.2%', // Mock data - integrate with analytics service
-            changeType: 'positive'
+          products: {
+            value: totalProducts,
+            change: `${productsChange >= 0 ? '+' : ''}${productsChange}%`,
+            changeType: productsChange > 0 ? 'positive' : productsChange < 0 ? 'negative' : 'neutral'
           },
           reviews: {
             value: '0 New', // Implement reviews system
