@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Typography, TextField } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
-export default function ProductDetailsCard() {
-  const [productTitle, setProductTitle] = useState('Classic Cotton T-Shirt');
-  const [description, setDescription] = useState(
-    'A classic white T-shirt made from soft, comfortable fabric with a clean, timeless fit. Perfect for everyday wear'
-  );
+export default function ProductDetailsCard({ productTitle, setProductTitle, description, setDescription }) {
+  // Use provided props or default values
+  const title = productTitle !== undefined ? productTitle : 'Classic Cotton T-Shirt';
+  const desc = description !== undefined ? description : 'A classic white T-shirt made from soft, comfortable fabric with a clean, timeless fit. Perfect for everyday wear';
 
   return (
     <Box
@@ -46,8 +45,8 @@ export default function ProductDetailsCard() {
         </Typography>
         <TextField
           fullWidth
-          value={productTitle}
-          onChange={(e) => setProductTitle(e.target.value)}
+          value={title}
+          onChange={(e) => setProductTitle && setProductTitle(e.target.value)}
           sx={{
             '& .MuiOutlinedInput-root': {
               backgroundColor: '#FFFFFF',
@@ -82,8 +81,8 @@ export default function ProductDetailsCard() {
           fullWidth
           multiline
           rows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={desc}
+          onChange={(e) => setDescription && setDescription(e.target.value)}
           sx={{
             '& .MuiOutlinedInput-root': {
               backgroundColor: '#FFFFFF',

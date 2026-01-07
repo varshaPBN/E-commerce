@@ -1,23 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Slider } from '@mui/material';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
-export default function PricingProfitCard() {
-  const [sellingPrice, setSellingPrice] = useState(35.0);
+export default function PricingProfitCard({ sellingPrice: propSellingPrice, setSellingPrice: setPropSellingPrice, profitMargin: propProfitMargin, setProfitMargin: setPropProfitMargin }) {
+  const [sellingPrice, setSellingPrice] = useState(propSellingPrice !== undefined ? propSellingPrice : 35.0);
   const baseCost = 15.5;
   const profit = sellingPrice - baseCost;
-  const [profitMargin, setProfitMargin] = useState(50);
+  const [profitMargin, setProfitMargin] = useState(propProfitMargin !== undefined ? propProfitMargin : 50);
+
+  // Sync with props if provided
+  useEffect(() => {
+    if (propSellingPrice !== undefined) {
+      setSellingPrice(propSellingPrice);
+    }
+  }, [propSellingPrice]);
+
+  useEffect(() => {
+    if (propProfitMargin !== undefined) {
+      setProfitMargin(propProfitMargin);
+    }
+  }, [propProfitMargin]);
 
   const handlePriceChange = (newPrice) => {
     setSellingPrice(newPrice);
+    if (setPropSellingPrice) setPropSellingPrice(newPrice);
     const newMargin = ((newPrice - baseCost) / newPrice) * 100;
-    setProfitMargin(Math.max(0, Math.min(100, newMargin)));
+    const margin = Math.max(0, Math.min(100, newMargin));
+    setProfitMargin(margin);
+    if (setPropProfitMargin) setPropProfitMargin(margin);
   };
 
   const handleMarginChange = (newMargin) => {
     setProfitMargin(newMargin);
+    if (setPropProfitMargin) setPropProfitMargin(newMargin);
     const newPrice = baseCost / (1 - newMargin / 100);
     setSellingPrice(newPrice);
+    if (setPropSellingPrice) setPropSellingPrice(newPrice);
   };
 
   return (

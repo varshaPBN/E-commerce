@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Box, Typography, Button, Select, MenuItem, FormControl, IconButton } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -8,13 +8,79 @@ import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import PaletteIcon from '@mui/icons-material/Palette';
 
-export default function ProductPreviewPanel() {
+export default function ProductPreviewPanel(props = {}) {
   const router = useRouter();
   const [font, setFont] = useState('Playfair Display');
   const [fontSize, setFontSize] = useState('32');
   const [bold, setBold] = useState(true);
   const [italic, setItalic] = useState(false);
   const [underline, setUnderline] = useState(true);
+    // Get product preview image based on category
+  const getCategoryImage = (category) => {
+    const categoryImages = {
+      'Tshirt': 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Hats': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Mug': 'https://images.unsplash.com/photo-1650959858546-d09833d5317b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Bags': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    };
+    return categoryImages[category] || categoryImages['Tshirt'];
+  };
+
+  // Get uploaded design from localStorage
+  const [uploadedDesign, setUploadedDesign] = useState(null);
+  const [currentCategory, setCurrentCategory] = useState('Tshirt');
+  const [previewImage, setPreviewImage] = useState(getCategoryImage('Tshirt'));
+
+    useEffect(() => {
+    const updateData = () => {
+      const productData = localStorage.getItem('productCreationData');
+      if (productData) {
+        const parsed = JSON.parse(productData);
+        // Update category
+        const category = props.category || parsed.category || 'Tshirt';
+        setCurrentCategory(category);
+        setPreviewImage(getCategoryImage(category));
+        // Update design
+        if (parsed.designFile) {
+          setUploadedDesign(parsed.designFile);
+        } else {
+          setUploadedDesign(null);
+        }
+      } else {
+        // If no localStorage data, use props or defaults
+        const category = props.category || 'Tshirt';
+        setCurrentCategory(category);
+        setPreviewImage(getCategoryImage(category));
+      }
+    };
+    
+    updateData();
+    // Check for changes every 500ms
+    const interval = setInterval(updateData, 500);
+    
+    return () => clearInterval(interval);
+  }, [props.category]);
+
+  // Also update when window regains focus (user navigates back)
+  useEffect(() => {
+    const handleFocus = () => {
+      const productData = localStorage.getItem('productCreationData');
+      if (productData) {
+        const parsed = JSON.parse(productData);
+        const category = props.category || parsed.category || 'Tshirt';
+        setCurrentCategory(category);
+        setPreviewImage(getCategoryImage(category));
+        if (parsed.designFile) {
+          setUploadedDesign(parsed.designFile);
+        } else {
+          setUploadedDesign(null);
+        }
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [props.category]);
 
   return (
     <Box
@@ -31,30 +97,81 @@ export default function ProductPreviewPanel() {
           borderRadius: '12px',
           p: 4,
           textAlign: 'center',
-          minHeight: '500px',
+          height: '500px',
+          width: '700px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
+          overflow: 'hidden',
         }}
       >
-        <Box
-          component="img"
-          src="https://via.placeholder.com/400x500/FDF8F2/3B2A1A?text=T-Shirt+Preview"
-          alt="Product Preview"
+              <Box
           sx={{
-            maxWidth: '100%',
-            height: 'auto',
-            borderRadius: '8px',
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />
+        >
+          {/* Product Base Image */}
+          <Box
+            component="img"
+            src={previewImage}
+            alt="Product Preview"
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              objectPosition: 'center',
+              borderRadius: '8px',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}
+          />
+          {/* Uploaded Design Overlay */}
+          {uploadedDesign && (
+            <Box
+              component="img"
+              src={uploadedDesign}
+              alt="Design Overlay"
+              sx={{
+                maxWidth: '50%',
+                maxHeight: '50%',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
+                objectPosition: 'center',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 10,
+                pointerEvents: 'none',
+                mixBlendMode: 'multiply',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+              }}
+            />
+          )}
+        </Box>
       </Box>
 
       {/* Submit Design Button */}
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <Button
           variant="contained"
-          onClick={() => router.push('/review-pricing')}
+          onClick={() => {
+            // Ensure data is saved before navigating
+            const productData = localStorage.getItem('productCreationData');
+            if (productData) {
+              router.push('/review-pricing');
+            } else {
+              alert('Please fill in product details before proceeding');
+            }
+          }}
           sx={{
             backgroundColor: '#3B2A1A',
             color: '#FFFFFF',

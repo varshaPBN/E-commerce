@@ -16,7 +16,7 @@ const productSchema = new Schema({
   },
   category: {
   type: String,
-  enum: ["Tshirt", "Hat", "Mug", "Bag"],
+  enum: ["Tshirt", "Hats", "Mug", "Bags"],
   required: true
   },
   price: {

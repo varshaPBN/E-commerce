@@ -4,11 +4,51 @@ const Products = mongoose.model("products")
 
 
 module.exports = (app) => {
+
+    // Get available categories
+    app.get("/api/v1/artist/products/categories", async (req, res) => {
+      try {
+        const categories = ["Tshirt", "Hats", "Mug", "Bags"];
+        res.status(200).json({
+          message: "Categories fetched successfully",
+          categories
+        });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    // Get available colors
+    app.get("/api/v1/artist/products/colors", async (req, res) => {
+      try {
+        const colors = ["Black", "White", "Red", "Blue", "Green"];
+        res.status(200).json({
+          message: "Colors fetched successfully",
+          colors
+        });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
+    app.get("/api/v1/artist/products/sizes", async (req, res) => {
+      try {
+        const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+        res.status(200).json({
+          message: "Sizes fetched successfully",
+          sizes
+        });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+
     //product creation
     app.post("/api/v1/artist/products/create", userAuth, async (req, res) => {
     try {
       const {
         name,
+        description,
         category,
         price,
         design,
@@ -24,6 +64,7 @@ module.exports = (app) => {
       const product = await Products.create({
         artistId: req.user.id,
         name,
+        description,
         category,
         price,
         design,
