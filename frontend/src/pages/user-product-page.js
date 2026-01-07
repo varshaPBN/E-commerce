@@ -179,25 +179,70 @@ export default function ProductPage() {
         router.push(`/product-view?productId=${product._id}`);
     };
 
-    return (
-        <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-            {/* ================= HEADER ================= */}
-            <ProductsHeader />
+        {/* ================= CONTENT ================= */}
+        <Box sx={{ display: "flex", gap: 4 }}>
+          {/* ========== SIDEBAR ========== */}
+          <Box sx={{ width: 220 }}>
+            <Typography fontWeight={600} mb={2}>
+              Category
+            </Typography>
 
-            {/* ================= PAGE CONTENT ================= */}
-            <Box sx={{ px: 6, py: 3 }}>
-                {/* ================= HERO ================= */}
+            {[
+              "All",
+              "Clothing",
+              "Posters & Prints",
+              "Accessories",
+              "Home & Living",
+              "Limited Editions",
+            ].map((item) => (
+              <Box
+                key={item}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                }}
+                onClick={() => setSelectedCategory(item)}
+              >
+                <Checkbox size="small" checked={selectedCategory === item} />
+                <Typography fontSize={14}>{item}</Typography>
+              </Box>
+            ))}
+          </Box>
+
+          {/* ========== PRODUCT GRID ========== */}
+          <Box
+            sx={{
+              flex: 1,
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 3,
+            }}
+          >
+            {filteredProducts.map((product) => (
+              <Card
+                key={product.title}
+                sx={{
+                  borderRadius: 3,
+                  boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
+                  position: "relative",
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={product.image}
+                  alt={product.title}
+                />
+
                 <Box
-                    sx={{
-                        bgcolor: "#DED3BF",
-                        borderRadius: 4,
-                        px: 6,
-                        py: 4,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        mb: 4,
-                    }}
+                  sx={{
+                    position: "absolute",
+                    bottom: 20,
+                    right: 10,
+                    display: "flex",
+                    gap: 1,
+                  }}
                 >
                     <Typography
                         variant="h4"
@@ -426,6 +471,8 @@ export default function ProductPage() {
                 </Alert>
             </Snackbar>
         </Box>
-    );
+      </Box>
+    </Box>
+  );
 }
 
