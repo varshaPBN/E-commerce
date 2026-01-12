@@ -40,8 +40,8 @@ export default function DashboardStats() {
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {[
-                { name: 'Limited Edition Tote', time: 'Just now', amount: '+$89.00', image: 'https://via.placeholder.com/48x48/FFD700/8B4513?text=Tote' },
-                { name: 'Ceramic Art Plate', time: '2 mins ago', amount: '+$113.00', image: 'https://via.placeholder.com/48x48/FFFFFF/8B4513?text=Plate' },
+                { name: 'Limited Edition Tote', time: 'Just now', amount: '+$89.00', image: '/l1.png' },
+                { name: 'Ceramic Art Plate', time: '2 mins ago', amount: '+$113.00', image: '/l2.png' },
               ].map((order, idx) => (
                 <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
