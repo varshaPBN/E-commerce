@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const User = mongoose.model("users");
 const jwt = require("jsonwebtoken");
-
+const sendOtpMail = require("../utils/mailer"); //otp
 const otpLength = 6;
 
 module.exports = (app) => {
@@ -15,9 +15,30 @@ module.exports = (app) => {
       for (let i = 0; i < otpLength; i++) {
         newOTP += digits[Math.floor(Math.random() * 10)];
       }
-      console.log("newOTP: ", newOTP);
 
-      const user = await User.findOne({ email });
+      await User.updateOne(
+      { email },
+      {
+        otp: newOTP,
+        otpExpiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+      }
+    );
+
+    // ✅ SEND OTP EMAIL
+    await sendOtpMail(email, newOTP);
+
+    res.status(200).json({ message: "OTP sent successfully" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+      // console.log("newOTP: ", newOTP);
+
+      /*const user = await User.findOne({ email });
       if (!user) {
         res.status(404).json({ message: "User not found" });
       } else {
@@ -28,10 +49,10 @@ module.exports = (app) => {
       console.log(error);
       res.status(500).send({ message: error.message });
     }
-  });
+  }); */
 
   // Verify OTP for login
-  app.post("/api/v1/user/verify/otp", async (req, res) => {
+  /*app.post("/api/v1/user/verify/otp", async (req, res) => {
     try {
       const { email, otp } = req.body;
 
@@ -53,5 +74,58 @@ module.exports = (app) => {
       console.log(error);
       res.status(500).send({ message: error.message });
     }
-  });
-};
+  }); */
+
+  app.post("/api/v1/user/verify/otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.otp || !user.otpExpiresAt) {
+      return res.status(400).json({ message: "OTP not generated" });
+    }
+
+    if (Date.now() > user.otpExpiresAt) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // generate JWT
+    const payload = {
+      id: user._id.toString(),
+      email: user.email,
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+
+    // ✅ clear OTP after success
+    await User.updateOne(
+      { email },
+      { otp: null, otpExpiresAt: null }
+    );
+
+    res.status(200).json({
+      message: "Login Success",
+      token,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+  
+}; 
+

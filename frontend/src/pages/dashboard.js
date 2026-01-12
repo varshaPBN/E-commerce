@@ -37,36 +37,70 @@ export default function Dashboard() {
           },
         };
   
-        // Fetch all dashboard data in parallel
-        const [profileRes, analyticsRes, ordersRes, productsRes] = await Promise.all([
+        // Fetch all dashboard data in parallel with individual error handling
+        const [profileRes, analyticsRes, ordersRes, productsRes] = await Promise.allSettled([
           axios.get('/api/v1/artist/profile', axiosConfig),
           axios.get('/api/v1/artist/dashboard/analytics', axiosConfig),
           axios.get('/api/v1/artist/dashboard/recent-orders?limit=5', axiosConfig),
-          axios.get('/api/v1/artist/dashboard/top-products?limit=5', axiosConfig),
+          axios.get('/api/v1/artist/products/view', axiosConfig),
         ]);
   
-        if (profileRes.data.artist) {
-          setArtistInfo(profileRes.data.artist);
+        // Handle profile response
+        if (profileRes.status === 'fulfilled' && profileRes.value?.data?.artist) {
+          setArtistInfo(profileRes.value.data.artist);
+        } else if (profileRes.status === 'rejected') {
+          console.error('Error fetching profile:', profileRes.reason);
         }
   
-        if (analyticsRes.data.success) {
+        // Handle analytics response
+        if (analyticsRes.status === 'fulfilled' && analyticsRes.value?.data?.success) {
           setDashboardData(prev => ({
             ...prev,
-            analytics: analyticsRes.data.analytics,
+            analytics: analyticsRes.value.data.analytics,
           }));
+        } else if (analyticsRes.status === 'rejected') {
+          console.error('Error fetching analytics:', analyticsRes.reason);
         }
   
-        if (ordersRes.data.success) {
+        // Handle orders response
+        if (ordersRes.status === 'fulfilled' && ordersRes.value?.data?.success) {
           setDashboardData(prev => ({
             ...prev,
-            recentOrders: ordersRes.data.orders,
+            recentOrders: ordersRes.value.data.orders,
           }));
+        } else if (ordersRes.status === 'rejected') {
+          console.error('Error fetching orders:', ordersRes.reason);
         }
   
-        if (productsRes.data.success) {
+        // Handle products response
+        if (productsRes.status === 'fulfilled' && productsRes.value?.data?.products) {
+          // Map products to match TopProducts component expectations
+          const mappedProducts = productsRes.value.data.products
+            .slice(0, 5) // Limit to top 5 products
+            .map(product => ({
+              _id: product._id,
+              name: product.name,
+              design: product.design,
+              category: product.category,
+              soldQuantity: product.soldQuantity || 0,
+              revenue: product.revenue || (product.price * (product.soldQuantity || 0)).toFixed(2),
+            }));
+          
           setDashboardData(prev => ({
             ...prev,
-            topProducts: productsRes.data.products,
+            topProducts: mappedProducts,
+          }));
+        } else if (productsRes.status === 'rejected') {
+          console.error('Error fetching products:', productsRes.reason);
+          console.error('Error details:', {
+            message: productsRes.reason?.message,
+            response: productsRes.reason?.response?.data,
+            status: productsRes.reason?.response?.status,
+          });
+          // Set empty array on error so component doesn't break
+          setDashboardData(prev => ({
+            ...prev,
+            topProducts: [],
           }));
         }
       } catch (error) {

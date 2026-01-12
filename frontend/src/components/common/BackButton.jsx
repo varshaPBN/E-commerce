@@ -14,7 +14,7 @@ export default function BackButton() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ px: 4, mt: 2.5, mb: 4.5 }}>
+    <Container maxWidth="xl" sx={{ px: 4, mt: compact ? 0 : 2.5, mb: noBottomMargin ? 0 : 4.5 }}>
       <Button
         startIcon={<ArrowBack />}
         onClick={handleBack}
