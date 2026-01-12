@@ -253,6 +253,7 @@ export default function ReviewPricing() {
               category={productData.category}
               designFile={productData.designFile}
               productTitle={productTitle}
+              selectedColor={productData.selectedColor}
               />
             </Grid>
           </Grid>

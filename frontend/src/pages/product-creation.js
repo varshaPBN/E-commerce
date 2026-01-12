@@ -14,6 +14,51 @@ export default function ProductCreation() {
   const [success, setSuccess] = useState('');
   const [currentCategory, setCurrentCategory] = useState('Tshirt');
 
+  // Check if this is a fresh start (from dashboard) or coming back (from review-pricing)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const isFreshStart = router.query.fresh === 'true';
+    
+    if (isFreshStart) {
+      // Fresh start: Clear old data and initialize with defaults
+      const defaultData = {
+        category: 'Tshirt',
+        product: '',
+        selectedColor: 'black',
+        view: 'FRONT',
+        selectedSize: [],
+        designFile: null,
+        isFreshStart: true, // Flag to indicate this is a fresh start
+      };
+      localStorage.setItem('productCreationData', JSON.stringify(defaultData));
+      setCurrentCategory('Tshirt');
+      // Remove the query parameter from URL without reloading
+      router.replace('/product-creation', undefined, { shallow: true });
+    } else {
+      // Coming back from review-pricing: Preserve existing data
+      const productData = localStorage.getItem('productCreationData');
+      if (productData) {
+        const parsed = JSON.parse(productData);
+        if (parsed.category) {
+          setCurrentCategory(parsed.category);
+        }
+      } else {
+        // No data exists, initialize defaults
+        const defaultData = {
+          category: 'Tshirt',
+          product: '',
+          selectedColor: 'black',
+          view: 'FRONT',
+          selectedSize: [],
+          designFile: null,
+        };
+        localStorage.setItem('productCreationData', JSON.stringify(defaultData));
+        setCurrentCategory('Tshirt');
+      }
+    }
+  }, [router.query.fresh]); // Run when query param changes
+
   useEffect(() => {
     const updateCategory = () => {
       const productData = localStorage.getItem('productCreationData');

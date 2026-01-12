@@ -8,7 +8,7 @@ module.exports = (app) => {
     // Get available categories
     app.get("/api/v1/artist/products/categories", async (req, res) => {
       try {
-        const categories = ["Tshirt", "Hats", "Mug", "Bags"];
+        const categories = ["Tshirt", "Hat", "Mug", "Bag"];
         res.status(200).json({
           message: "Categories fetched successfully",
           categories
@@ -21,7 +21,7 @@ module.exports = (app) => {
     // Get available colors
     app.get("/api/v1/artist/products/colors", async (req, res) => {
       try {
-        const colors = ["Black", "White", "Red", "Blue", "Green"];
+        const colors = ["Black", "White", "Red", "Blue"];
         res.status(200).json({
           message: "Colors fetched successfully",
           colors

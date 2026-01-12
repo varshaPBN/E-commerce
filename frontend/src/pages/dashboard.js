@@ -82,6 +82,7 @@ export default function Dashboard() {
               name: product.name,
               design: product.design,
               category: product.category,
+              colors: product.colors || [], // Include colors array
               soldQuantity: product.soldQuantity || 0,
               revenue: product.revenue || (product.price * (product.soldQuantity || 0)).toFixed(2),
             }));
