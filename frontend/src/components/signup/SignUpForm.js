@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Checkbox, FormControlLabel, Link, Alert } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
+import { Box, TextField, Button, Typography, Checkbox, FormControlLabel, Link } from '@mui/material';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import GoogleIcon from '@mui/icons-material/Google';
 import OtpModal from './OtpModal';
 import axios from 'axios';
@@ -111,25 +111,17 @@ export default function SignUpForm() {
   };
 
   return (
-    <Box sx={{ p: { xs: 3, md: 6 }, maxWidth: '500px', mx: 'auto' }}>
-      <Typography
-        sx={{
-          fontFamily: "'Playfair Display'",
-          fontSize: { xs: 32, md: 42 },
-          fontWeight: 700,
-          color: '#3B2A1A',
-          mb: 2,
-        }}
-      >
-        GET STARTED
+    <Box sx={{ maxWidth: '500px' }}>
+      <Typography variant="h4" fontWeight={600} mb={1}>
+        Get Started
       </Typography>
 
-      <Typography sx={{ fontSize: 14, color: '#666', mb: 4 }}>
+      <Typography sx={{ fontSize: 14, color: 'text.secondary', mb: 4, maxWidth: 420 }}>
         Already have an account?{' '}
         <Link
           href="/login"
           sx={{
-            color: '#3B2A1A',
+            color: 'text.primary',
             textDecoration: 'none',
             fontWeight: 600,
             '&:hover': { textDecoration: 'underline' },
@@ -140,73 +132,48 @@ export default function SignUpForm() {
       </Typography>
 
       {error && (
-        <Alert 
-          severity="error" 
-          sx={{ mb: 3 }}
-          onClose={() => setError('')}
-        >
+        <Typography color="error" fontSize={14} sx={{ mb: 2, maxWidth: 420 }}>
           {error}
-        </Alert>
+        </Typography>
       )}
 
-      <Box sx={{ mb: 3 }}>
-        <Typography sx={{ fontSize: 14, fontWeight: 500, color: '#3B2A1A', mb: 1 }}>Email Address</Typography>
-        <TextField
-          fullWidth
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: '#FFFFFF',
-              borderRadius: '12px',
-              '& fieldset': {
-                borderColor: '#E0E0E0',
-              },
-              '&:hover fieldset': {
-                borderColor: '#3B2A1A',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#3B2A1A',
-              },
+      <TextField
+        fullWidth
+        label="Email address"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        autoComplete="email"
+        InputProps={{
+          startAdornment: <MailOutlineIcon sx={{ mr: 1 }} />,
+        }}
+        sx={{ 
+          mb: 2, 
+          maxWidth: 420,
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: '#FFFFFF',
+            '&:-webkit-autofill': {
+              WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+              WebkitTextFillColor: '#000000',
             },
-            '& .MuiInputBase-input': {
-              paddingLeft: '45px',
-              // Override browser autocomplete styles
-              '&:-webkit-autofill': {
-                WebkitBoxShadow: '0 0 0 100px #FFFFFF inset !important',
-                WebkitTextFillColor: '#3B2A1A !important',
-                backgroundColor: '#FFFFFF !important',
-              },
-              '&:-webkit-autofill:hover': {
-                WebkitBoxShadow: '0 0 0 100px #FFFFFF inset !important',
-                WebkitTextFillColor: '#3B2A1A !important',
-                backgroundColor: '#FFFFFF !important',
-              },
-              '&:-webkit-autofill:focus': {
-                WebkitBoxShadow: '0 0 0 100px #FFFFFF inset !important',
-                WebkitTextFillColor: '#3B2A1A !important',
-                backgroundColor: '#FFFFFF !important',
-              },
+            '&:-webkit-autofill:hover': {
+              WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
             },
-          }}
-          InputProps={{
-            startAdornment: (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <EmailIcon sx={{ color: '#666', fontSize: 20 }} />
-              </Box>
-            ),
-          }}
-        />
-      </Box>
+            '&:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+            },
+            '&:-webkit-autofill:active': {
+              WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+            },
+          },
+          '& .MuiInputBase-input': {
+            '&:-webkit-autofill': {
+              WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+              WebkitTextFillColor: '#000000',
+            },
+          },
+        }}
+      />
 
       <FormControlLabel
         control={
@@ -222,18 +189,18 @@ export default function SignUpForm() {
           />
         }
         label={
-          <Typography sx={{ fontSize: 14, color: '#666' }}>
+          <Typography sx={{ fontSize: 14, color: 'text.secondary', lineHeight: 1.5 }}>
             I agree to platform{' '}
-            <Link href="/terms" sx={{ color: '#8B4513', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+            <Link href="/terms" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
               Terms of service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" sx={{ color: '#8B4513', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+            <Link href="/privacy" sx={{ color: 'text.primary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
               Privacy Policy
             </Link>
           </Typography>
         }
-        sx={{ mb: 3, alignItems: 'flex-start' }}
+        sx={{ mb: 4, alignItems: 'center' }}
       />
 
       <Button
@@ -242,19 +209,11 @@ export default function SignUpForm() {
         onClick={handleProceed}
         disabled={!email || !validateEmail(email) || !agreed || loading}
         sx={{
-          backgroundColor: '#3B2A1A',
-          color: '#FFFFFF',
+          py: 1.6,
+          borderRadius: 8,
           textTransform: 'none',
-          borderRadius: '12px',
-          py: 1.5,
-          fontSize: 16,
-          fontWeight: 600,
           mb: 2,
-          '&:hover': { backgroundColor: '#2A1F15' },
-          '&:disabled': {
-            backgroundColor: '#CCCCCC',
-            color: '#FFFFFF',
-          },
+          maxWidth: 420,
         }}
       >
         {loading ? 'Processing...' : 'Click To Proceed'}
@@ -277,14 +236,10 @@ export default function SignUpForm() {
           </Box>
         }
         sx={{
-          backgroundColor: '#3B2A1A',
-          color: '#FFFFFF',
+          py: 1.6,
+          borderRadius: 8,
           textTransform: 'none',
-          borderRadius: '12px',
-          py: 1.5,
-          fontSize: 16,
-          fontWeight: 600,
-          '&:hover': { backgroundColor: '#2A1F15' },
+          maxWidth: 420,
         }}
       >
         Sign in with google
