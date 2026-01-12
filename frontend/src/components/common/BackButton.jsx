@@ -2,17 +2,15 @@ import { ArrowBack } from "@mui/icons-material";
 import { Button, Container } from "@mui/material";
 import { useRouter } from "next/router";
 
-export default function BackButton({ fallbackPath = "/" }) {
+export default function BackButton() {
   const router = useRouter();
 
   const handleBack = () => {
     // Check if there's history to go back to
     if (window.history.length > 1) {
       router.back();
-    } else {
-      // If no history, navigate to fallback path or home
-      router.push(fallbackPath);
     }
+    // If no history, do nothing
   };
 
   return (

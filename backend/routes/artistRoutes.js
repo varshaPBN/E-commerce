@@ -135,7 +135,7 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
     app.post("/api/v1/artist/verify-otp", async (req, res) => {
       try {
         const { email, otp } = req.body;
-  
+
         const user = await Artists.findOne({ email });
 
         if (!user) {
@@ -163,4 +163,24 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
         res.status(500).json({ message: error.message });
       }
     });
+
+  // Get artist info by ID (public endpoint)
+  app.get("/api/v1/artist/:artistId", async (req, res) => {
+    try {
+      const { artistId } = req.params;
+      const artist = await Artists.findById(artistId).select("name storeName logo avatar");
+      
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+      
+      res.status(200).json({ 
+        message: "Artist info fetched successfully", 
+        artist 
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: error.message });
+    }
+  });
 }
