@@ -100,9 +100,26 @@ export default function UserLogin() {
         
         setSuccess("OTP verified successfully!");
         setOtpOpen(false);
-        // Redirect after successful verification
+        const returnUrl = router.query.returnUrl || router.query.redirect;
+        let redirectPath = "/user-product-page/69510d53b813f65b9da439b2";
+        
+        if (returnUrl) {
+          try {
+            const decodedUrl = decodeURIComponent(returnUrl);
+            if (decodedUrl && 
+                decodedUrl.startsWith("/") && 
+                !decodedUrl.includes("[") && 
+                !decodedUrl.includes("]") &&
+                decodedUrl.length > 1) {
+              redirectPath = decodedUrl;
+            }
+          } catch (e) {
+            console.warn("Failed to decode returnUrl:", e);
+          }
+        }
+        
         setTimeout(() => {
-          router.push("/user-product-page");
+          router.push(redirectPath);
         }, 500);
       } else {
         // Handle error responses (400, 500, etc.)
@@ -275,7 +292,7 @@ export default function UserLogin() {
             <Button
               fullWidth
               variant="contained"
-              onClick={() => router.push("/user-product-page")}
+              onClick={() => router.push("/user-product-page/69510d53b813f65b9da439b2")}
               sx={{
                 mt: 11,
                 bgcolor: "#8B5E3C",

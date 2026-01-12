@@ -1,4 +1,4 @@
-// pages/product.js
+// pages/product/[productId].js
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -17,20 +17,20 @@ import {
   Alert,
 } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
-import ProductsHeader from "@/components/common/ProductsHeader";
+import ProductsHeader from "@/components/common/UserProductsHeader";
 import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
 import axios from "axios";
-import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/router";
 import { getAuthToken, isAuthenticated } from "@/utils/auth";
 
 export default function ProductView() {
-  const productId = useSearchParams().get("productId");
   const router = useRouter();
+  const { productId } = router.query; // Get productId from dynamic route
 
   const [product, setProduct] = useState({});
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [artistInfo, setArtistInfo] = useState(null);
   const [size, setSize] = useState("None");
   const [color, setColor] = useState("None");
   const [isLiked, setLiked] = useState({});
@@ -56,6 +56,17 @@ export default function ProductView() {
     }
   }
 
+  async function fetchArtistInfo(artistId) {
+    try {
+      const response = await axios.get(`/api/v1/artist/${artistId}`);
+      if (response.data.artist) {
+        setArtistInfo(response.data.artist);
+      }
+    } catch (error) {
+      // Error handled silently - artist info will remain null
+    }
+  }
+
   async function handleAddToCart(productId, color, size, quantity) {
     // Check authentication
     if (!isAuthenticated()) {
@@ -64,7 +75,12 @@ export default function ProductView() {
         message: "Please log in to add items to cart",
         severity: "warning",
       });
-      setTimeout(() => router.push("/user-login"), 1500);
+      setTimeout(() => {
+        router.push({
+          pathname: "/user-login",
+          query: { returnUrl: router.asPath }
+        });
+      }, 1500);
       return;
     }
 
@@ -76,7 +92,10 @@ export default function ProductView() {
           message: "Please log in to add items to cart",
           severity: "error",
         });
-        router.push("/user-login");
+        router.push({
+          pathname: "/user-login",
+          query: { returnUrl: router.asPath }
+        });
         return;
       }
 
@@ -121,6 +140,7 @@ export default function ProductView() {
   useEffect(() => {
     if (!product?.artistId) return;
     fetchAllProducts();
+    fetchArtistInfo(product.artistId);
   }, [product?.artistId]);
 
   // Set default color when product colors are loaded
@@ -159,10 +179,10 @@ export default function ProductView() {
   return (
     <Box sx={{ bgcolor: "#FDF8F2", minHeight: "100vh" }}>
       {/* Header */}
-      <ProductsHeader />
+      <ProductsHeader logo={artistInfo?.logo} />
 
       {/* Back Button */}
-      <BackButton fallbackPath="/user-product-page" />
+      <BackButton />
 
       {/* Product Section */}
       <Container maxWidth="xl" sx={{ mb: 7, px: "60px !important" }}>

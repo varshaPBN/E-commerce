@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { Search } from "@mui/icons-material";
-import { Avatar, Badge, Box, Container, IconButton, InputAdornment, TextField } from "@mui/material";
+import { Avatar, Badge, Box, Container, IconButton, InputAdornment, TextField, Menu, MenuItem } from "@mui/material";
 import axios from "axios";
-import { getAuthToken } from "@/utils/auth";
+import { getAuthToken, logout } from "@/utils/auth";
 
 export default function ProductsHeader() {
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
   const fetchCartCount = async () => {
     try {
@@ -22,7 +24,6 @@ export default function ProductsHeader() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Handle different possible response structures
       let items = [];
       if (response.data.cart?.items) {
         items = response.data.cart.items;
@@ -32,16 +33,10 @@ export default function ProductsHeader() {
         items = response.data;
       }
 
-      // Calculate total quantity of all items in cart
       const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
       setCartCount(totalQuantity);
     } catch (error) {
-      // If user is not authenticated or cart is empty, set count to 0
-      if (error.response?.status === 401 || error.response?.status === 404) {
-        setCartCount(0);
-      } else {
-        setCartCount(0);
-      }
+      setCartCount(0);
     }
   };
 
@@ -64,21 +59,51 @@ export default function ProductsHeader() {
     router.push("/cart");
   };
 
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleMenuClose();
+    router.push("/user-login");
+  };
+
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    if (router.pathname?.includes('[')) {
+      const currentPath = router.asPath?.split('?')[0];
+      if (currentPath && !currentPath.includes('[') && !currentPath.includes(']')) {
+        const queryParams = new URLSearchParams();
+        if (searchQuery.trim()) {
+          queryParams.set('search', searchQuery.trim());
+        }
+        Object.keys(router.query).forEach(key => {
+          if (key !== 'search' && key !== 'artistId') {
+            queryParams.set(key, router.query[key]);
+          }
+        });
+        const queryString = queryParams.toString();
+        const newUrl = queryString ? `${currentPath}?${queryString}` : currentPath;
+        router.replace(newUrl, undefined, { shallow: true });
+        return;
+      }
+    }
+    
     if (searchQuery.trim()) {
-      // Navigate to search results or update current page with search query
-      const currentPath = router.pathname;
       router.push({
-        pathname: currentPath,
+        pathname: router.pathname,
         query: { ...router.query, search: searchQuery.trim() },
       });
     } else {
-      // Remove search query if empty
       const { search, ...restQuery } = router.query;
       router.push({
         pathname: router.pathname,
@@ -113,9 +138,7 @@ export default function ProductsHeader() {
             alt="Artloom Logo"
             sx={{
               height: "60px",
-              cursor: "pointer",
             }}
-            onClick={() => router.push("/")}
           />
 
           {/* Search Bar */}
@@ -197,15 +220,36 @@ export default function ProductsHeader() {
                 />
               </IconButton>
             </Badge>
-            <Avatar
-              src="/user-avatar.png"
-              alt="User Avatar"
-              sx={{
-                width: 40,
-                height: 40,
-                background: "linear-gradient(135deg, #FF6B9D 0%, #C239B3 100%)",
+            <IconButton
+              onClick={handleAvatarClick}
+              sx={{ p: 0 }}
+            >
+              <Avatar
+                src="/user-avatar.png"
+                alt="User Avatar"
+                sx={{
+                  width: 40,
+                  height: 40,
+                  background: "linear-gradient(135deg, #FF6B9D 0%, #C239B3 100%)",
+                  cursor: "pointer",
+                }}
+              />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
               }}
-            />
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+            >
+              <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            </Menu>
           </Box>
         </Box>
       </Container>

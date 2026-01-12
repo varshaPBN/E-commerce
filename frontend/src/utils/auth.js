@@ -42,3 +42,33 @@ export const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+/**
+ * Safely get the current path for returnUrl, avoiding template variables
+ * @param {object} router - Next.js router object
+ * @param {string} artistId - Optional artistId to construct path
+ * @returns {string} Safe path to use as returnUrl
+ */
+export const getSafeReturnPath = (router, artistId = null) => {
+  if (typeof window === "undefined") {
+    // Server-side: use default
+    return "/user-product-page/69510d53b813f65b9da439b2";
+  }
+  
+  // If artistId is provided, use it
+  if (artistId) {
+    return `/user-product-page/${artistId}`;
+  }
+  
+  // Check router.asPath but validate it doesn't contain template variables
+  const asPath = router?.asPath;
+  if (asPath && 
+      !asPath.includes("[") && 
+      !asPath.includes("]") && 
+      asPath.startsWith("/") &&
+      asPath !== "/user-product-page/[artistId]") {
+    return asPath;
+  }
+  
+  // Default fallback
+  return "/user-product-page/69510d53b813f65b9da439b2";
+};
