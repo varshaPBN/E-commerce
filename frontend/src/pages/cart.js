@@ -191,7 +191,7 @@ const CartPage = () => {
       <ProductsHeader />
 
       {/* Back Button */}
-      <BackButton fallbackPath="/user-product-page" />
+      <BackButton />
 
       {/* Main Content */}
       <Container maxWidth="lg" sx={{ mt: 3 }}>

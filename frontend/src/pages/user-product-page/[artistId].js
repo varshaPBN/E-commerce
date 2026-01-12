@@ -18,25 +18,25 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 
 import ProductsHeader from "@/components/common/UserProductsHeader";
-import { isAuthenticated, getAuthToken } from "@/utils/auth";
+import { isAuthenticated, getAuthToken, getSafeReturnPath } from "@/utils/auth";
 import axios from "axios";
 import { Snackbar, Alert } from "@mui/material";
 
 export default function ProductPage() {
     const router = useRouter();
-    const { artistId, search } = router.query;
+    const { artistId, search } = router.query; // artistId comes from dynamic route, search from query params
     const [products, setProducts] = useState([]);
     const [allProducts, setAllProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [likedProducts, setLikedProducts] = useState({});
     const [artistInfo, setArtistInfo] = useState(null);
-    const [selectedCategories, setSelectedCategories] = useState(["All"]);
+    const [selectedCategories, setSelectedCategories] = useState([]);
     const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
     const isUserAuthenticated = isAuthenticated();
 
-    // Fetch products from backend
+    // Fetch products and artist info from backend
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             if (!artistId) {
                 setLoading(false);
                 return;
@@ -44,20 +44,32 @@ export default function ProductPage() {
 
             try {
                 setLoading(true);
-                const response = await axios.get(`/api/v1/${artistId}/products`, {
-                    validateStatus: () => true
-                });
+                // Fetch products and artist info in parallel
+                const [productsResponse, artistResponse] = await Promise.all([
+                    axios.get(`/api/v1/${artistId}/products`, {
+                        validateStatus: () => true
+                    }),
+                    axios.get(`/api/v1/artist/${artistId}`, {
+                        validateStatus: () => true
+                    })
+                ]);
 
-                if (response.status === 200 && response.data.products) {
-                    setAllProducts(response.data.products);
-                    setProducts(response.data.products);
+                if (productsResponse.status === 200 && productsResponse.data.products) {
+                    setAllProducts(productsResponse.data.products);
+                    setProducts(productsResponse.data.products);
                 } else {
-                    console.error("Failed to fetch products:", response.data?.message);
+                    console.error("Failed to fetch products:", productsResponse.data?.message);
                     setProducts([]);
                     setAllProducts([]);
                 }
+
+                if (artistResponse.status === 200 && artistResponse.data.artist) {
+                    setArtistInfo(artistResponse.data.artist);
+                } else {
+                    console.error("Failed to fetch artist info:", artistResponse.data?.message);
+                }
             } catch (error) {
-                console.error("Error fetching products:", error);
+                console.error("Error fetching data:", error);
                 setProducts([]);
                 setAllProducts([]);
             } finally {
@@ -65,7 +77,7 @@ export default function ProductPage() {
             }
         };
 
-        fetchProducts();
+        fetchData();
     }, [artistId]);
 
     // Filter products based on search query and category
@@ -73,8 +85,7 @@ export default function ProductPage() {
         let filtered = [...allProducts];
 
         // Apply category filter
-        const hasAllSelected = selectedCategories.includes("All");
-        if (!hasAllSelected && selectedCategories.length > 0) {
+        if (selectedCategories.length > 0) {
             filtered = filtered.filter((product) => {
                 const productCategory = product.category?.toLowerCase() || "";
                 // Check if product category matches any of the selected categories
@@ -99,9 +110,12 @@ export default function ProductPage() {
     }, [search, selectedCategories, allProducts]);
 
     const toggleLike = (productId) => {
-        // Check authentication before allowing like
         if (!isUserAuthenticated) {
-            router.push("/user-login");
+            const currentPath = getSafeReturnPath(router, artistId);
+            router.push({
+                pathname: "/user-login",
+                query: { returnUrl: currentPath }
+            });
             return;
         }
         setLikedProducts((prev) => ({
@@ -111,9 +125,12 @@ export default function ProductPage() {
     };
 
     const addToCart = async (product) => {
-        // Check authentication before adding to cart
         if (!isUserAuthenticated) {
-            router.push("/user-login");
+            const currentPath = getSafeReturnPath(router, artistId);
+            router.push({
+                pathname: "/user-login",
+                query: { returnUrl: currentPath }
+            });
             return;
         }
 
@@ -125,7 +142,11 @@ export default function ProductPage() {
                     message: "Please log in to add items to cart",
                     severity: "error",
                 });
-                router.push("/user-login");
+                const currentPath = getSafeReturnPath(router, artistId);
+                router.push({
+                    pathname: "/user-login",
+                    query: { returnUrl: currentPath }
+                });
                 return;
             }
 
@@ -169,20 +190,22 @@ export default function ProductPage() {
         }
     };
 
-    // Handle product card click - redirect guests to login
     const handleProductClick = (product) => {
         if (!isUserAuthenticated) {
-            router.push("/user-login");
+            const currentPath = getSafeReturnPath(router, artistId);
+            router.push({
+                pathname: "/user-login",
+                query: { returnUrl: currentPath }
+            });
             return;
         }
-        // Navigate to product detail page
-        router.push(`/product-view?productId=${product._id}`);
+        router.push(`/product-view/${product._id}`);
     };
 
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
             {/* ================= HEADER ================= */}
-            <ProductsHeader />
+            <ProductsHeader logo={artistInfo?.logo} />
 
             {/* ================= PAGE CONTENT ================= */}
             <Box sx={{ px: 6, py: 3 }}>
@@ -208,7 +231,7 @@ export default function ProductPage() {
                     </Typography>
 
                     <Avatar 
-                        src={artistInfo?.profilePicture || "/creator.png"} 
+                        src={artistInfo?.avatar || "/creator.png"} 
                         sx={{ width: 80, height: 80 }} 
                     />
                 </Box>
@@ -222,7 +245,6 @@ export default function ProductPage() {
                         </Typography>
 
                         {[
-                            "All",
                             "Apparel",
                             "Accessories",
                             "Drinkware",
@@ -231,28 +253,15 @@ export default function ProductPage() {
                             const isChecked = selectedCategories.includes(item);
                             
                             const handleCategoryToggle = () => {
-                                if (item === "All") {
-                                    // If "All" is clicked, toggle it and clear other selections
+                                setSelectedCategories((prev) => {
                                     if (isChecked) {
-                                        setSelectedCategories([]);
+                                        // Uncheck: remove this category
+                                        return prev.filter(cat => cat !== item);
                                     } else {
-                                        setSelectedCategories(["All"]);
+                                        // Check: add this category
+                                        return [...prev, item];
                                     }
-                                } else {
-                                    // For other categories, toggle them individually
-                                    setSelectedCategories((prev) => {
-                                        // Remove "All" if it's selected when selecting a specific category
-                                        const withoutAll = prev.filter(cat => cat !== "All");
-                                        
-                                        if (isChecked) {
-                                            // Uncheck: remove this category
-                                            return withoutAll.filter(cat => cat !== item);
-                                        } else {
-                                            // Check: add this category
-                                            return [...withoutAll, item];
-                                        }
-                                    });
-                                }
+                                });
                             };
 
                             return (
@@ -316,11 +325,11 @@ export default function ProductPage() {
                                 <Typography color="text.secondary">
                                     {(() => {
                                         const hasFilters = (search && search.trim()) || 
-                                                         (selectedCategories.length > 0 && !selectedCategories.includes("All"));
+                                                         (selectedCategories.length > 0);
                                         
                                         if (hasFilters) {
                                             const searchText = search && search.trim() ? ` for "${search}"` : "";
-                                            const categoryText = selectedCategories.length > 0 && !selectedCategories.includes("All")
+                                            const categoryText = selectedCategories.length > 0
                                                 ? ` in ${selectedCategories.join(", ")}`
                                                 : "";
                                             return `No products found${searchText}${categoryText}`;
@@ -428,4 +437,3 @@ export default function ProductPage() {
         </Box>
     );
 }
-

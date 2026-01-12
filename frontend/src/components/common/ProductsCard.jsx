@@ -19,7 +19,7 @@ export default function ProductsCard({
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   function handleClick() {
-    router.push(`/product-view?productId=${id}`);
+    router.push(`/product-view/${id}`);
   }
 
   const handleAddToCart = async (e) => {
@@ -31,7 +31,12 @@ export default function ProductsCard({
         message: "Please log in to add items to cart",
         severity: "warning",
       });
-      setTimeout(() => router.push("/user-login"), 1500);
+      setTimeout(() => {
+        router.push({
+          pathname: "/user-login",
+          query: { returnUrl: router.asPath }
+        });
+      }, 1500);
       return;
     }
 
@@ -43,7 +48,10 @@ export default function ProductsCard({
           message: "Please log in to add items to cart",
           severity: "error",
         });
-        router.push("/user-login");
+        router.push({
+          pathname: "/user-login",
+          query: { returnUrl: router.asPath }
+        });
         return;
       }
 
