@@ -12,6 +12,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import axios from "axios";
+import BackButton from "./common/BackButton";
 
 export default function Login() {
   const router = useRouter();
@@ -95,7 +96,7 @@ export default function Login() {
           justifyContent: "space-between",
           alignItems: "center",
           px: 6,
-          mb: 4,
+          mb: 2,
         }}
       >
 
@@ -112,6 +113,11 @@ export default function Login() {
         <Typography fontSize={14} color="text.secondary">
           Need Help?
         </Typography>
+      </Box>
+
+      {/* BACK BUTTON */}
+      <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+        <BackButton fallbackPath="/" noBottomMargin={true} compact={true} />
       </Box>
 
       {/* MAIN CARD */}
@@ -133,11 +139,6 @@ export default function Login() {
             p: 4,
           }}
         >
-          <Typography fontSize={14} mb={2} sx={{ cursor: "pointer" }}>
-            ← Back
-          </Typography>
-
-
           <Card sx={{ width: 300, mx: "auto", borderRadius: 4 }}>
             <Box sx={{ position: "relative" }}>
               <img
@@ -226,10 +227,36 @@ export default function Login() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               InputProps={{
                 startAdornment: <MailOutlineIcon sx={{ mr: 1 }} />,
               }}
-              sx={{ mb: 4, maxWidth: 420 }}
+              sx={{ 
+                mb: 4, 
+                maxWidth: 420,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: '#FFFFFF',
+                  '&:-webkit-autofill': {
+                    WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+                    WebkitTextFillColor: '#000000',
+                  },
+                  '&:-webkit-autofill:hover': {
+                    WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+                  },
+                  '&:-webkit-autofill:focus': {
+                    WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+                  },
+                  '&:-webkit-autofill:active': {
+                    WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  '&:-webkit-autofill': {
+                    WebkitBoxShadow: '0 0 0 100px #FFFFFF inset',
+                    WebkitTextFillColor: '#000000',
+                  },
+                },
+              }}
             />
           ) : (
             // OTP input

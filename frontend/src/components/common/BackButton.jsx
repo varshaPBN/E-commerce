@@ -2,7 +2,7 @@ import { ArrowBack } from "@mui/icons-material";
 import { Button, Container } from "@mui/material";
 import { useRouter } from "next/router";
 
-export default function BackButton({ fallbackPath = "/" }) {
+export default function BackButton({ fallbackPath = "/", noBottomMargin = false, compact = false }) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -16,7 +16,7 @@ export default function BackButton({ fallbackPath = "/" }) {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ px: 4, mt: 2.5, mb: 4.5 }}>
+    <Container maxWidth="xl" sx={{ px: 4, mt: compact ? 0 : 2.5, mb: noBottomMargin ? 0 : 4.5 }}>
       <Button
         startIcon={<ArrowBack />}
         onClick={handleBack}
