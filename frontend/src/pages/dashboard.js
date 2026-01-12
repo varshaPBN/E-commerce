@@ -49,9 +49,12 @@ export default function Dashboard() {
         if (profileRes.status === 'fulfilled' && profileRes.value?.data?.artist) {
           setArtistInfo(profileRes.value.data.artist);
         } else if (profileRes.status === 'rejected') {
-          console.error('Error fetching profile:', profileRes.reason);
+          console.error('❌ PROFILE ERROR:', profileRes.reason);
+          console.error('Status:', profileRes.reason?.response?.status);
+          console.error('Message:', profileRes.reason?.response?.data?.message);
+          console.error('Full error:', profileRes.reason?.response?.data);
         }
-  
+   
         // Handle analytics response
         if (analyticsRes.status === 'fulfilled' && analyticsRes.value?.data?.success) {
           setDashboardData(prev => ({
@@ -59,9 +62,12 @@ export default function Dashboard() {
             analytics: analyticsRes.value.data.analytics,
           }));
         } else if (analyticsRes.status === 'rejected') {
-          console.error('Error fetching analytics:', analyticsRes.reason);
+          console.error('❌ ANALYTICS ERROR:', analyticsRes.reason);
+          console.error('Status:', analyticsRes.reason?.response?.status);
+          console.error('Message:', analyticsRes.reason?.response?.data?.message);
+          console.error('Full error:', analyticsRes.reason?.response?.data);
         }
-  
+   
         // Handle orders response
         if (ordersRes.status === 'fulfilled' && ordersRes.value?.data?.success) {
           setDashboardData(prev => ({
@@ -69,7 +75,10 @@ export default function Dashboard() {
             recentOrders: ordersRes.value.data.orders,
           }));
         } else if (ordersRes.status === 'rejected') {
-          console.error('Error fetching orders:', ordersRes.reason);
+          console.error('❌ ORDERS ERROR:', ordersRes.reason);
+          console.error('Status:', ordersRes.reason?.response?.status);
+          console.error('Message:', ordersRes.reason?.response?.data?.message);
+          console.error('Full error:', ordersRes.reason?.response?.data);
         }
   
         // Handle products response
