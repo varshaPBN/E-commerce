@@ -47,6 +47,7 @@ export default function TopProducts({products = []}) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        //ml:'auto'
       }}
     >
       <Typography
@@ -61,7 +62,7 @@ export default function TopProducts({products = []}) {
         Top Products
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5,ml:100}}>
             {products.length > 0 ? (
         products.map((product, index) => (
           <Box
