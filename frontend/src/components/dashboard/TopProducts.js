@@ -84,7 +84,7 @@ export default function TopProducts({products = []}) {
         Top Products
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5,ml:100}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5}}>
             {products.length > 0 ? (
         products.map((product, index) => (
           <Box
