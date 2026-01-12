@@ -14,6 +14,7 @@ export default function StoreSetup() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result); // base64 data URL
+        console.log('Avatar uploaded:', reader.result.substring(0, 50) + '...');
       };
       reader.readAsDataURL(file);
     }
@@ -62,7 +63,7 @@ export default function StoreSetup() {
                   alignItems: { xs: 'center', lg: 'flex-start' },
                 }}
               >
-                <AvatarUpload onChange={handleAvatarChange}/>
+                <AvatarUpload onChange={handleAvatarChange} avatar={avatar}/>
                 <DecorativeImages />
               </Box>
 

@@ -5,6 +5,7 @@ const ProductCard = ({ image, alt }) => {
   return (
     <Card
       sx={{
+        width: '100%',
         borderRadius: 3,
         overflow: 'hidden',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
@@ -23,6 +24,7 @@ const ProductCard = ({ image, alt }) => {
           width: '100%',
           height: { xs: '250px', md: '350px' },
           objectFit: 'cover',
+          display: 'block',
         }}
       />
     </Card>
