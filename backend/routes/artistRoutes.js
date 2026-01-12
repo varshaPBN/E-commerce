@@ -11,6 +11,12 @@ module.exports = (app) => {
     const { email } = req.body;
 
     try {
+      // Check if artist already exists and is verified
+      const existingArtist = await Artists.findOne({ email });
+      
+      if (existingArtist && existingArtist.isEmailVerified) {
+        return res.status(400).json({ message: "Artist already exists" });
+      }
 
       const digits = "0123456789";
       let newOTP = "";
@@ -20,20 +26,19 @@ module.exports = (app) => {
       
       console.log("newOTP: ", newOTP);
       await sendOtpMail(email, newOTP); //otp
-      const artist = await Artists.findOne({ email });
       
-
-       if (!artist) {
+      if (!existingArtist) {
         const response = await Artists.create({ email, otp: newOTP });
         res.status(201).json({ message: "OTP Sent Successfully", response });
       } else {
+        // Artist exists but not verified, update OTP
         const response = await Artists.updateOne({ email }, { otp: newOTP });
         res.status(201).json({ message: "OTP Sent Successfully", response });
       }
       
     } catch (error) {
       console.log(error);
-      res.status(500).send({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
   });
 
@@ -46,26 +51,32 @@ app.post("/api/v1/artist/signup/otp", async (req, res) => {
       const artist = await Artists.findOne({ email });
       console.log(artist);
 
-      if (artist && artist.otp === otp) {
-        await Artists.updateOne(
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      if (artist.otp !== otp) {
+        return res.status(400).json({ message: "Invalid OTP" });
+      }
+
+      await Artists.updateOne(
         { email },
         { isEmailVerified: true, otp: null }
       );
 
-        const payload = {
-          id: artist._id,
-          email: artist.email,
-        };
+      const payload = {
+        id: artist._id,
+        email: artist.email,
+      };
 
-        const token = jwt.sign(payload, process.env.JWT_SECRET, {
-          expiresIn: process.env.JWT_EXPIRES_IN,
-        });
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      });
 
-        res.status(200).json({ message: "SignUp Success", token });
-      }
+      res.status(200).json({ message: "SignUp Success", token });
     } catch (error) {
       console.log(error);
-      res.status(500).send({ message: error.message });
+      res.status(500).json({ message: error.message });
     }
   });
 
@@ -102,17 +113,21 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
           newOTP += digits[Math.floor(Math.random() * 10)];
         }
         console.log("newOTP: ", newOTP);
+        await sendOtpMail(email, newOTP);
   
         const user = await Artists.findOne({ email });
         if (!user) {
-          res.status(404).json({ message: "User not found" });
+          return res.status(404).json({ message: "User not found" });
         } else {
+          // Send OTP email
+          await sendOtpMail(email, newOTP);
+          // Update OTP in database
           const response = await Artists.updateOne({ email }, { otp: newOTP });
           res.status(201).json({ message: "OTP Sent Successfully", response });
         }
       } catch (error) {
         console.log(error);
-        res.status(500).send({ message: error.message });
+        res.status(500).json({ message: error.message });
       }
     });
   
@@ -145,7 +160,7 @@ app.post("/api/v1/artist/signup/profile",async (req,res)=>{
         }
       } catch (error) {
         console.log(error);
-        res.status(500).send({ message: error.message });
+        res.status(500).json({ message: error.message });
       }
     });
 }

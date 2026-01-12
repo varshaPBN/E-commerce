@@ -22,6 +22,7 @@ export default function StoreSetupForm({avatar}) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogo(reader.result); // base64 data URL
+        console.log('Logo uploaded:', reader.result.substring(0, 50) + '...');
       };
       reader.readAsDataURL(file);
     }
@@ -206,7 +207,7 @@ export default function StoreSetupForm({avatar}) {
           id="logo-upload"
           onChange={handleLogoChange}
         />
-        <Box
+                <Box
           component="label"
           htmlFor="logo-upload"
           sx={{
@@ -219,19 +220,41 @@ export default function StoreSetupForm({avatar}) {
             transition: 'all 0.3s ease',
             display: 'block',
             width: '100%',
+            minHeight: '150px',
+            overflow: 'hidden',
             '&:hover': {
               borderColor: '#3B2A1A',
               backgroundColor: '#F8F8F8',
             },
           }}
         >
-          <ArrowUpwardIcon sx={{ color: '#666', fontSize: { xs: 32, md: 40 }, mb: 1 }} />
-          <Typography sx={{ fontSize: { xs: 12, md: 14 }, color: '#666', fontWeight: 500 }}>
-            Upload a file or drag and drop.
-          </Typography>
-          <Typography sx={{ fontSize: { xs: 11, md: 12 }, color: '#999', mt: 0.5 }}>
-            PNG, JPG and up to 10MB.
-          </Typography>
+          {logo ? (
+            <Box
+              component="img"
+              src={logo}
+              alt="Logo preview"
+              sx={{
+                width: '100%',
+                maxWidth: '100%',
+                maxHeight: '200px',
+                height: 'auto',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                display: 'block',
+                margin: '0 auto',
+              }}
+            />
+          ) : (
+            <>
+              <ArrowUpwardIcon sx={{ color: '#666', fontSize: { xs: 32, md: 40 }, mb: 1 }} />
+              <Typography sx={{ fontSize: { xs: 12, md: 14 }, color: '#666', fontWeight: 500 }}>
+                Upload a file or drag and drop.
+              </Typography>
+              <Typography sx={{ fontSize: { xs: 11, md: 12 }, color: '#999', mt: 0.5 }}>
+                PNG, JPG and up to 10MB.
+              </Typography>
+            </>
+          )}
         </Box>
       </Box>
 

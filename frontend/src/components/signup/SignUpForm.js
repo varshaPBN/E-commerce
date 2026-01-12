@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Checkbox, FormControlLabel, Link } from '@mui/material';
+import { Box, TextField, Button, Typography, Checkbox, FormControlLabel, Link, Alert } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import GoogleIcon from '@mui/icons-material/Google';
 import OtpModal from './OtpModal';
@@ -22,16 +22,26 @@ export default function SignUpForm() {
       setLoading(true);
       setError('');
       try {
-        const response = await axios.post('/api/v1/artist/signup/email', {email});
+        // validateStatus prevents throwing on 4xx/5xx status codes
+        const response = await axios.post('/api/v1/artist/signup/email', {email}, {
+          validateStatus: () => true // Don't throw on any status code
+        });
   
         if (response.status === 201) {
           setOtpModalOpen(true);
         } else {
-          setError(data.message || 'Failed to send OTP');
+          // Handle error responses (400, 500, etc.)
+          setError(response.data?.message || 'Failed to send OTP. Please try again.');
         }
       } catch (error) {
-        setError(response.data.message || 'Failed to send OTP');
-        console.error('Error sending OTP:', error);
+        // Fallback error handling (shouldn't reach here with validateStatus)
+        if (error.request) {
+          // Request was made but no response received
+          setError('Network error. Please check your connection and try again.');
+        } else {
+          // Something else happened
+          setError('An error occurred. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
@@ -42,7 +52,10 @@ export default function SignUpForm() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('/api/v1/artist/signup/otp', { email, otp });
+      // validateStatus prevents throwing on 4xx/5xx status codes
+      const response = await axios.post('/api/v1/artist/signup/otp', { email, otp }, {
+        validateStatus: () => true // Don't throw on any status code
+      });
   
       if (response.status === 200 && response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -51,11 +64,18 @@ export default function SignUpForm() {
           window.location.href = '/store-setup';
         }
       } else {
-        setError(response.data.message || 'Invalid OTP. Please try again.');
+        // Handle error responses (400, 404, 500, etc.)
+        setError(response.data?.message || 'Invalid OTP. Please try again.');
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Network error. Please try again.');
-      console.error('Error verifying OTP:', error);
+      // Fallback error handling (shouldn't reach here with validateStatus)
+      if (error.request) {
+        // Request was made but no response received
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        // Something else happened
+        setError('An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,16 +85,26 @@ export default function SignUpForm() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('/api/v1/artist/signup/email', { email });
+      // validateStatus prevents throwing on 4xx/5xx status codes
+      const response = await axios.post('/api/v1/artist/signup/email', { email }, {
+        validateStatus: () => true // Don't throw on any status code
+      });
       
       if (response.status === 201) {
         setOtpModalOpen(true);
       } else {
-        setError(response.data.message || 'Failed to resend OTP');
+        // Handle error responses (400, 500, etc.)
+        setError(response.data?.message || 'Failed to resend OTP. Please try again.');
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Network error. Please try again.');
-      console.error('Error resending OTP:', error);
+      // Fallback error handling (shouldn't reach here with validateStatus)
+      if (error.request) {
+        // Request was made but no response received
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        // Something else happened
+        setError('An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,6 +139,16 @@ export default function SignUpForm() {
         </Link>
       </Typography>
 
+      {error && (
+        <Alert 
+          severity="error" 
+          sx={{ mb: 3 }}
+          onClose={() => setError('')}
+        >
+          {error}
+        </Alert>
+      )}
+
       <Box sx={{ mb: 3 }}>
         <Typography sx={{ fontSize: 14, fontWeight: 500, color: '#3B2A1A', mb: 1 }}>Email Address</Typography>
         <TextField
@@ -116,9 +156,10 @@ export default function SignUpForm() {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
           sx={{
             '& .MuiOutlinedInput-root': {
-              backgroundColor: email ? '#F8F8F8' : '#FFFFFF',
+              backgroundColor: '#FFFFFF',
               borderRadius: '12px',
               '& fieldset': {
                 borderColor: '#E0E0E0',
@@ -132,6 +173,22 @@ export default function SignUpForm() {
             },
             '& .MuiInputBase-input': {
               paddingLeft: '45px',
+              // Override browser autocomplete styles
+              '&:-webkit-autofill': {
+                WebkitBoxShadow: '0 0 0 100px #FFFFFF inset !important',
+                WebkitTextFillColor: '#3B2A1A !important',
+                backgroundColor: '#FFFFFF !important',
+              },
+              '&:-webkit-autofill:hover': {
+                WebkitBoxShadow: '0 0 0 100px #FFFFFF inset !important',
+                WebkitTextFillColor: '#3B2A1A !important',
+                backgroundColor: '#FFFFFF !important',
+              },
+              '&:-webkit-autofill:focus': {
+                WebkitBoxShadow: '0 0 0 100px #FFFFFF inset !important',
+                WebkitTextFillColor: '#3B2A1A !important',
+                backgroundColor: '#FFFFFF !important',
+              },
             },
           }}
           InputProps={{

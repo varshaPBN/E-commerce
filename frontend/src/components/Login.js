@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-//import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import axios from "axios";
@@ -22,42 +22,64 @@ export default function Login() {
   const [error, setError] = useState("");
 
   const handleSendOTP = async () => {
+    if (!email || !email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    
     try {
-      setLoading(true);
-      setError("");
-      
-      const response = await axios.post(`${API_URL}/api/v1/artist/login`, {
-        email
+      const response = await axios.post('/api/v1/artist/login', { email }, {
+        validateStatus: () => true
       });
       
-      console.log("OTP sent:", response.data.message);
-      setStep(2); // Move to OTP verification step
-      
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to send OTP");
+      if (response.status === 201) {
+        setStep(2); 
+      } else {
+        // Handle different error statuses
+        const errorMessage = response.data?.message || 'Failed to send OTP. Please try again.';
+        setError(errorMessage);
+        console.error('Login error:', response.status, errorMessage);
+      }
+    } catch (error) {
+      // Fallback error handling (shouldn't reach here with validateStatus)
+      if (error.request) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError('An error occurred. Please try again.');
+      }
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyOTP = async () => {
+    setLoading(true);
+    setError("");
+    
     try {
-      setLoading(true);
-      setError("");
-      
-      const response = await axios.post(`${API_URL}/api/v1/artist/verify-otp`, {
-        email,
-        otp
+      const response = await axios.post('/api/v1/artist/verify-otp', { email, otp }, {
+        validateStatus: () => true 
       });
       
-      // Store token in localStorage
-      localStorage.setItem("artistToken", response.data.token);
-      
-      // Redirect to dashboard
-      router.push("/dashboard");
-      
-    } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP");
+      if (response.status === 200 && response.data.token) {
+
+        localStorage.setItem("token", response.data.token);
+        
+
+        router.push("/dashboard");
+      } else {
+        setError(response.data?.message || 'Invalid OTP. Please try again.');
+      }
+    } catch (error) {
+      if (error.request) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError('An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

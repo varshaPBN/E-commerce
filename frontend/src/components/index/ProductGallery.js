@@ -5,19 +5,19 @@ import ProductCard from './ProductCard';
 export default function ProductGallery() {
   const products = [
     {
-      image: 'https://via.placeholder.com/400x500/000000/FFFFFF?text=T-Shirt+Design',
+      image: '/image 60.png',
       alt: 'Custom T-Shirt with embroidery',
     },
     {
-      image: 'https://via.placeholder.com/400x500/FFFFFF/8B4513?text=Cowboy+Hat',
+      image: '/image 62.png',
       alt: 'Painted cowboy hat with sunflowers',
     },
     {
-      image: 'https://via.placeholder.com/400x500/FFD700/8B4513?text=Tote+Bags',
+      image: '/image 64.png',
       alt: 'Canvas tote bags',
     },
     {
-      image: 'https://via.placeholder.com/400x500/FFFFFF/8B4513?text=Mugs',
+      image: '/image 65.png',
       alt: 'White mugs with heart patterns',
     },
   ];
@@ -48,13 +48,21 @@ export default function ProductGallery() {
             From wardrobe staples to home decor, put your art on products people use everyday.
           </Typography>
         </Box>
-        <Grid container spacing={4}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(4, 1fr)'
+            },
+            gap: 4,
+          }}
+        >
           {products.map((product, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <ProductCard image={product.image} alt={product.alt} />
-            </Grid>
+            <ProductCard key={index} image={product.image} alt={product.alt} />
           ))}
-        </Grid>
+        </Box>
       </Container>
     </Box>
   );
