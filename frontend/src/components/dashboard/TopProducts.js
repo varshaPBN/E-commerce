@@ -1,51 +1,61 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-const products = [
-  {
-    name: 'Grey TShirt',
-    image: 'https://via.placeholder.com/60x60/808080/FFFFFF?text=TS',
-    sales: '42 sales this week',
-    revenue: '$1890',
-  },
-  {
-    name: 'Black Tote Bag',
-    image: 'https://via.placeholder.com/60x60/000000/FFFFFF?text=TB',
-    sales: '38 sales this week',
-    revenue: '$684',
-  },
-  {
-    name: 'Coffee Mug',
-    image: 'https://via.placeholder.com/60x60/8B4513/FFFFFF?text=CM',
-    sales: '20 sales this week',
-    revenue: '$570',
-  },
-  {
-    name: 'Black Cup',
-    image: 'https://via.placeholder.com/60x60/000000/FFFFFF?text=BC',
-    sales: '20 sales this week',
-    revenue: '$300',
-  },
-  {
-    name: 'Classic Red Hat',
-    image: 'https://via.placeholder.com/60x60/FF0000/FFFFFF?text=RH',
-    sales: '15 sales this week',
-    revenue: '$270',
-  },
-];
-
 export default function TopProducts({products = []}) {
-  // Get product preview image based on category
-  const getCategoryImage = (cat) => {
-    const categoryImages = {
-      'Tshirt': 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Hat': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Hats': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Mug': 'https://images.unsplash.com/photo-1650959858546-d09833d5317b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Bag': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Bags': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+  // Get product preview image based on category and color
+  const getCategoryImage = (category, color = 'black') => {
+    // Map backend color names (capitalized) to lowercase for image paths
+    const colorMap = {
+      'White': 'white',
+      'Black': 'black',
+      'Red': 'red',
+      'Blue': 'blue',
     };
-    return categoryImages[cat] || categoryImages['Tshirt'];
+    // Handle both backend format (capitalized) and lowercase format
+    const normalizedColor = typeof color === 'string' ? color.trim() : 'black';
+    const colorKey = colorMap[normalizedColor] || normalizedColor.toLowerCase() || 'black';
+    
+    const categoryImages = {
+      'Tshirt': {
+        'white': '/tshirt/white.png',
+        'black': '/tshirt/black.png',
+        'red'  : '/tshirt/red.png',
+        'blue' : '/tshirt/blue.png'
+      },
+      'Hat': {
+        'white': '/hat/white.png',
+        'black': '/hat/black.png',
+        'red'  : '/hat/red.png',
+        'blue' : '/hat/blue.png'
+      },
+      'Mug': {
+        'white': '/mug/white.png',
+        'black': '/mug/black.png',
+        'red'  : '/mug/red.png',
+        'blue' : '/mug/blue.png',
+      },
+      'Bag': {
+        'white': '/bag/white.png',
+        'black': '/bag/black.png',
+        'red'  : '/bag/red.png',
+        'blue' : '/bag/blue.png',
+      },
+    };
+    
+    // If category exists and has color options
+    if (categoryImages[category] && categoryImages[category][colorKey]) {
+      return categoryImages[category][colorKey];
+    }
+    // Fallback to black if color doesn't exist
+    if (categoryImages[category] && categoryImages[category]['black']) {
+      return categoryImages[category]['black'];
+    }
+    // Fallback to white if black doesn't exist
+    if (categoryImages[category] && categoryImages[category]['white']) {
+      return categoryImages[category]['white'];
+    }
+    // Fallback to Tshirt black if category doesn't exist
+    return categoryImages['Tshirt']?.['black'] || '/tshirt/black.png';
   };
 
   return (
@@ -97,17 +107,27 @@ export default function TopProducts({products = []}) {
                 flexShrink: 0,
                 backgroundColor: '#F5F5F5',
                 boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               {/* Base Product Image */}
               <Box
                 component="img"
-                src={getCategoryImage(product.category || 'Tshirt')}
+                src={getCategoryImage(
+                  product.category || 'Tshirt',
+                  (product.colors && Array.isArray(product.colors) && product.colors.length > 0) 
+                    ? product.colors[0] 
+                    : 'Black' // Default to 'Black' (backend format) if no color
+                )}
                 alt={product.name}
                 sx={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
+                  objectPosition: 'center',
+                  borderRadius: '8px',
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -120,18 +140,31 @@ export default function TopProducts({products = []}) {
                   src={product.design}
                   alt="Design"
                   sx={{
-                    maxWidth: '55%',
-                    maxHeight: '55%',
+                    maxWidth: '50%', // Default size matching preview (50%)
+                    maxHeight: '50%', // Default size matching preview (50%)
                     width: 'auto',
                     height: 'auto',
                     objectFit: 'contain',
+                    objectPosition: 'center',
                     position: 'absolute',
-                    top: '50%',
-                    left: '50%',
+                    top: '50%', // Default center position
+                    left: '50%', // Default center position
                     transform: 'translate(-50%, -50%)',
                     zIndex: 10,
+                    pointerEvents: 'none',
                     mixBlendMode: 'multiply',
-                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                    transition: 'top 0.2s ease, left 0.2s ease, max-width 0.2s ease, max-height 0.2s ease',
+                    outline: 'none !important',
+                    border: 'none !important',
+                    boxShadow: 'none !important',
+                    filter: 'none',
+                    WebkitFilter: 'none',
+                    '&::before': {
+                      display: 'none',
+                    },
+                    '&::after': {
+                      display: 'none',
+                    },
                   }}
                 />
               )}

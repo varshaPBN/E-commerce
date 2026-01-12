@@ -1,24 +1,85 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LockIcon from '@mui/icons-material/Lock';
 
-export default function LivePreviewCard({ category, designFile, productTitle }) {
-  // Get product preview image based on category
-  const getCategoryImage = (cat) => {
+export default function LivePreviewCard({ category, designFile, productTitle, selectedColor: propSelectedColor }) {
+  const [designSize, setDesignSize] = useState(50); // Default 50%
+  const [designPosition, setDesignPosition] = useState({ top: 50, left: 50 }); // Default center position
+  const [selectedColor, setSelectedColor] = useState(propSelectedColor || 'black'); // Store color in state
+
+  useEffect(() => {
+    // Get design size and position from localStorage
+    const productData = localStorage.getItem('productCreationData');
+    if (productData) {
+      const parsed = JSON.parse(productData);
+      if (parsed.designSize !== undefined) {
+        setDesignSize(parsed.designSize);
+      }
+      if (parsed.designPosition) {
+        setDesignPosition(parsed.designPosition);
+      }
+      // Also get color from localStorage on mount if prop not provided
+      if (!propSelectedColor && parsed.selectedColor) {
+        setSelectedColor(parsed.selectedColor);
+      }
+    }
+  }, [propSelectedColor]);
+
+  // Update color when prop changes
+  useEffect(() => {
+    if (propSelectedColor) {
+      setSelectedColor(propSelectedColor);
+    }
+  }, [propSelectedColor]);
+  
+  // Get product preview image based on category and color
+  const getCategoryImage = (cat, color = 'black') => {
     const categoryImages = {
-      'Tshirt': 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Hat': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Hats': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Mug': 'https://images.unsplash.com/photo-1650959858546-d09833d5317b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Bag': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Bags': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Tshirt': {
+        'white': '/tshirt/white.png',
+        'black': '/tshirt/black.png',
+        'red'  : '/tshirt/red.png',
+        'blue' : '/tshirt/blue.png'
+      },
+      'Hat': {
+        'white': '/hat/white.png',
+        'black': '/hat/black.png',
+        'red'  : '/hat/red.png',
+        'blue' : '/hat/blue.png'
+      },
+      'Mug': {
+        'white': '/mug/white.png',
+        'black': '/mug/black.png',
+        'red'  : '/mug/red.png',
+        'blue' : '/mug/blue.png',
+      },
+      'Bag': {
+        'white': '/bag/white.png',
+        'black': '/bag/black.png',
+        'red'  : '/bag/red.png',
+        'blue' : '/bag/blue.png',
+      },
     };
-    return categoryImages[cat] || categoryImages['Tshirt'];
+    
+    // If category exists and has color options
+    if (categoryImages[cat] && categoryImages[cat][color]) {
+      return categoryImages[cat][color];
+    }
+    // Fallback to black if color doesn't exist
+    if (categoryImages[cat] && categoryImages[cat]['black']) {
+      return categoryImages[cat]['black'];
+    }
+    // Fallback to white if black doesn't exist
+    if (categoryImages[cat] && categoryImages[cat]['white']) {
+      return categoryImages[cat]['white'];
+    }
+    // Fallback to Tshirt black if category doesn't exist
+    return categoryImages['Tshirt']?.['black'] || '/tshirt/black.png';
   };
 
-  const previewImage = getCategoryImage(category || 'Tshirt');
+  const previewImage = getCategoryImage(category || 'Tshirt', selectedColor);
   return (
     <Box
       sx={{
@@ -104,20 +165,31 @@ export default function LivePreviewCard({ category, designFile, productTitle }) 
               src={designFile}
               alt="Design Overlay"
               sx={{
-                maxWidth: '50%',
-                maxHeight: '50%',
+                maxWidth: `${designSize}%`,
+                maxHeight: `${designSize}%`,
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',
                 objectPosition: 'center',
                 position: 'absolute',
-                top: '50%',
-                left: '50%',
+                top: `${designPosition.top}%`,
+                left: `${designPosition.left}%`,
                 transform: 'translate(-50%, -50%)',
                 zIndex: 10,
                 pointerEvents: 'none',
                 mixBlendMode: 'multiply',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                transition: 'top 0.2s ease, left 0.2s ease, max-width 0.2s ease, max-height 0.2s ease',
+                outline: 'none !important',
+                border: 'none !important',
+                boxShadow: 'none !important',
+                filter: 'none',
+                WebkitFilter: 'none',
+                '&::before': {
+                  display: 'none',
+                },
+                '&::after': {
+                  display: 'none',
+                },
               }}
             />
           )}

@@ -1,79 +1,191 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { Box, Typography, Button, Select, MenuItem, FormControl, IconButton } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import FormatBoldIcon from '@mui/icons-material/FormatBold';
-import FormatItalicIcon from '@mui/icons-material/FormatItalic';
-import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
-import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
-import PaletteIcon from '@mui/icons-material/Palette';
+import { Box, Typography, Button, Slider } from '@mui/material';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 
 export default function ProductPreviewPanel(props = {}) {
   const router = useRouter();
-  const [font, setFont] = useState('Playfair Display');
-  const [fontSize, setFontSize] = useState('32');
-  const [bold, setBold] = useState(true);
-  const [italic, setItalic] = useState(false);
-  const [underline, setUnderline] = useState(true);
-    // Get product preview image based on category
-  const getCategoryImage = (category) => {
+  // Get product preview image based on category and color
+  const getCategoryImage = (category, color = 'black') => {
     const categoryImages = {
-      'Tshirt': 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Hats': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Mug': 'https://images.unsplash.com/photo-1650959858546-d09833d5317b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      'Bags': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Tshirt': {
+        'white': '/tshirt/white.png',
+        'black': '/tshirt/black.png',
+        'red'  : '/tshirt/red.png',
+        'blue' : '/tshirt/blue.png'
+      },
+      'Hat': {
+        'white': '/hat/white.png',
+        'black': '/hat/black.png',
+        'red'  : '/hat/red.png',
+        'blue' : '/hat/blue.png'
+      },
+      'Mug': {
+        'white': '/mug/white.png',
+        'black': '/mug/black.png',
+        'red'  : '/mug/red.png',
+        'blue' : '/mug/blue.png',
+      },
+      'Bag': {
+        'white': '/bag/white.png',
+        'black': '/bag/black.png',
+        'red'  : '/bag/red.png',
+        'blue' : '/bag/blue.png',
+      },
     };
-    return categoryImages[category] || categoryImages['Tshirt'];
+    
+    // If category exists and has color options
+    if (categoryImages[category] && categoryImages[category][color]) {
+      return categoryImages[category][color];
+    }
+    // Fallback to black if color doesn't exist
+    if (categoryImages[category] && categoryImages[category]['black']) {
+      return categoryImages[category]['black'];
+    }
+    // Fallback to white if black doesn't exist
+    if (categoryImages[category] && categoryImages[category]['white']) {
+      return categoryImages[category]['white'];
+    }
+    // Fallback to Tshirt black if category doesn't exist
+    return categoryImages['Tshirt']?.['black'] || '/tshirt/black.png';
   };
 
-  // Get uploaded design from localStorage
+  // Use consistent initial state for SSR hydration
   const [uploadedDesign, setUploadedDesign] = useState(null);
   const [currentCategory, setCurrentCategory] = useState('Tshirt');
-  const [previewImage, setPreviewImage] = useState(getCategoryImage('Tshirt'));
+  const [currentColor, setCurrentColor] = useState('black');
+  const [previewImage, setPreviewImage] = useState(getCategoryImage('Tshirt', 'black'));
+  const [designSize, setDesignSize] = useState(50); // Default 50% size
+  const [designPosition, setDesignPosition] = useState({ top: 50, left: 50 }); // Default center position (50%, 50%)
+  const lastValidDesignRef = useRef(null); // Store last valid design to prevent clearing
 
     useEffect(() => {
+    // Only run on client-side after hydration
+    if (typeof window === 'undefined') return;
+    
     const updateData = () => {
       const productData = localStorage.getItem('productCreationData');
       if (productData) {
         const parsed = JSON.parse(productData);
-        // Update category
-        const category = props.category || parsed.category || 'Tshirt';
+        // Update category - prioritize localStorage over props since it's updated immediately
+        const category = parsed.category || props.category || 'Tshirt';
+        // Update color
+        const color = parsed.selectedColor || 'black';
         setCurrentCategory(category);
-        setPreviewImage(getCategoryImage(category));
-        // Update design
-        if (parsed.designFile) {
+        setCurrentColor(color);
+        setPreviewImage(getCategoryImage(category, color));
+        // Check if this is a fresh start
+        const isFreshStart = parsed.designFile === null && parsed.isFreshStart === true;
+        
+        // Update design - only show if designFile exists and is not null, AND it's NOT a fresh start
+        // Preserve last valid design if current is null (prevents clearing during race conditions)
+        if (!isFreshStart && parsed.designFile && parsed.designFile !== null && parsed.designFile !== '') {
           setUploadedDesign(parsed.designFile);
-        } else {
+          lastValidDesignRef.current = parsed.designFile; // Store valid design
+        } else if (isFreshStart) {
+          // Fresh start - explicitly clear design
           setUploadedDesign(null);
+          lastValidDesignRef.current = null;
+        } else {
+          // Only clear if we don't have a last valid design (user explicitly removed it)
+          // Otherwise preserve the last valid design to prevent it from disappearing
+          if (lastValidDesignRef.current) {
+            setUploadedDesign(lastValidDesignRef.current);
+          } else {
+            setUploadedDesign(null);
+          }
+        }
+        // Update design size if saved
+        if (parsed.designSize !== undefined) {
+          setDesignSize(parsed.designSize);
+        }
+        // Update design position if saved
+        if (parsed.designPosition) {
+          setDesignPosition(parsed.designPosition);
         }
       } else {
         // If no localStorage data, use props or defaults
         const category = props.category || 'Tshirt';
+        const color = 'black';
         setCurrentCategory(category);
-        setPreviewImage(getCategoryImage(category));
+        setCurrentColor(color);
+        setPreviewImage(getCategoryImage(category, color));
       }
     };
     
+    // Load immediately on mount
     updateData();
-    // Check for changes every 500ms
+    // Check for changes every 500ms to stay in sync
     const interval = setInterval(updateData, 500);
     
     return () => clearInterval(interval);
   }, [props.category]);
+  
+  // Also load immediately when component mounts (ensures design shows right away when navigating back)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const productData = localStorage.getItem('productCreationData');
+    if (productData) {
+      try {
+        const parsed = JSON.parse(productData);
+        // Check if this is a fresh start (designFile is explicitly null)
+        const isFreshStart = parsed.designFile === null && parsed.isFreshStart === true;
+        
+        // Load design immediately ONLY if it's NOT a fresh start
+        // This is critical for showing design when navigating back from review-pricing
+        if (!isFreshStart && parsed.designFile && parsed.designFile !== null && parsed.designFile !== '') {
+          setUploadedDesign(parsed.designFile);
+          lastValidDesignRef.current = parsed.designFile; // Store valid design
+        } else {
+          // Fresh start - explicitly clear design
+          setUploadedDesign(null);
+          lastValidDesignRef.current = null;
+        }
+        // Load category and color - prioritize localStorage over props
+        const category = parsed.category || props.category || 'Tshirt';
+        const color = parsed.selectedColor || 'black';
+        setCurrentCategory(category);
+        setCurrentColor(color);
+        setPreviewImage(getCategoryImage(category, color));
+        // Load design size and position
+        if (parsed.designSize !== undefined) {
+          setDesignSize(parsed.designSize);
+        }
+        if (parsed.designPosition) {
+          setDesignPosition(parsed.designPosition);
+        }
+      } catch (error) {
+        console.error('Error parsing productCreationData:', error);
+      }
+    }
+  }, []); // Run once on mount
 
   // Also update when window regains focus (user navigates back)
   useEffect(() => {
-    const handleFocus = () => {
+      const handleFocus = () => {
       const productData = localStorage.getItem('productCreationData');
       if (productData) {
         const parsed = JSON.parse(productData);
-        const category = props.category || parsed.category || 'Tshirt';
+        const category = parsed.category || props.category || 'Tshirt';
+        const color = parsed.selectedColor || 'black';
         setCurrentCategory(category);
-        setPreviewImage(getCategoryImage(category));
-        if (parsed.designFile) {
+        setCurrentColor(color);
+        setPreviewImage(getCategoryImage(category, color));
+        // Update design - only show if designFile exists and is not null
+        if (parsed.designFile && parsed.designFile !== null && parsed.designFile !== '') {
           setUploadedDesign(parsed.designFile);
         } else {
           setUploadedDesign(null);
+        }
+        // Update design size if saved
+        if (parsed.designSize !== undefined) {
+          setDesignSize(parsed.designSize);
+        }
+        // Update design position if saved
+        if (parsed.designPosition) {
+          setDesignPosition(parsed.designPosition);
         }
       }
     };
@@ -81,6 +193,73 @@ export default function ProductPreviewPanel(props = {}) {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [props.category]);
+
+  // Handle design size change
+  const handleDesignSizeChange = (event, newValue) => {
+    setDesignSize(newValue);
+    // Save to localStorage
+    const productData = localStorage.getItem('productCreationData');
+    if (productData) {
+      const parsed = JSON.parse(productData);
+      parsed.designSize = newValue;
+      localStorage.setItem('productCreationData', JSON.stringify(parsed));
+    }
+  };
+
+  // Handle drag to position design
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    const rect = e.currentTarget.parentElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    setDragStart({
+      x: e.clientX - centerX,
+      y: e.clientY - centerY,
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !uploadedDesign) return;
+    
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Convert to percentage
+    const newLeft = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const newTop = Math.max(0, Math.min(100, (y / rect.height) * 100));
+    
+    const newPosition = { top: newTop, left: newLeft };
+    setDesignPosition(newPosition);
+    
+    // Save to localStorage
+    const productData = localStorage.getItem('productCreationData');
+    if (productData) {
+      const parsed = JSON.parse(productData);
+      parsed.designPosition = newPosition;
+      localStorage.setItem('productCreationData', JSON.stringify(parsed));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Reset position handler
+  const handleResetPosition = () => {
+    const newPosition = { top: 50, left: 50 };
+    setDesignPosition(newPosition);
+    const productData = localStorage.getItem('productCreationData');
+    if (productData) {
+      const parsed = JSON.parse(productData);
+      parsed.designPosition = newPosition;
+      localStorage.setItem('productCreationData', JSON.stringify(parsed));
+    }
+  };
 
   return (
     <Box
@@ -114,7 +293,11 @@ export default function ProductPreviewPanel(props = {}) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            cursor: uploadedDesign ? (isDragging ? 'grabbing' : 'grab') : 'default',
           }}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           {/* Product Base Image */}
           <Box
@@ -138,21 +321,39 @@ export default function ProductPreviewPanel(props = {}) {
               component="img"
               src={uploadedDesign}
               alt="Design Overlay"
+              onMouseDown={handleMouseDown}
               sx={{
-                maxWidth: '50%',
-                maxHeight: '50%',
+                maxWidth: `${designSize}%`,
+                maxHeight: `${designSize}%`,
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',
                 objectPosition: 'center',
                 position: 'absolute',
-                top: '50%',
-                left: '50%',
+                top: `${designPosition.top}%`,
+                left: `${designPosition.left}%`,
                 transform: 'translate(-50%, -50%)',
                 zIndex: 10,
-                pointerEvents: 'none',
+                pointerEvents: 'auto',
+                cursor: isDragging ? 'grabbing' : 'grab',
                 mixBlendMode: 'multiply',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+                transition: isDragging ? 'none' : 'top 0.1s ease, left 0.1s ease, max-width 0.2s ease, max-height 0.2s ease',
+                outline: 'none !important',
+                border: 'none !important',
+                boxShadow: 'none !important',
+                filter: 'none',
+                WebkitFilter: 'none',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                '&::before': {
+                  display: 'none',
+                },
+                '&::after': {
+                  display: 'none',
+                },
+                '&:hover': {
+                  opacity: 0.9,
+                },
               }}
             />
           )}
@@ -199,156 +400,64 @@ export default function ProductPreviewPanel(props = {}) {
         }}
       />
 
-      {/* Text Options */}
-      <Box
-        sx={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '12px',
-          p: 3,
-          boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
-        }}
-      >
-        <Typography
+      {/* Design Size Control */}
+      {uploadedDesign && (
+        <Box
           sx={{
-            fontFamily: "'Playfair Display'",
-            fontSize: { xs: 18, md: 20 },
-            fontWeight: 700,
-            color: '#3B2A1A',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '12px',
+            p: 3,
+            boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
             mb: 2,
           }}
         >
-          Text Options
-        </Typography>
-
-        {/* Font and Size Dropdowns */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-          <FormControl sx={{ flex: 1 }}>
-            <Select
-              value={font}
-              onChange={(e) => setFont(e.target.value)}
-              IconComponent={ArrowDropDownIcon}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <ZoomInIcon sx={{ color: '#3B2A1A', fontSize: 20 }} />
+            <Typography
               sx={{
-                borderRadius: '8px',
-                backgroundColor: '#F8F8F8',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#E0E0E0',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#3B2A1A',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#3B2A1A',
-                },
+                fontFamily: "'Playfair Display'",
+                fontSize: { xs: 18, md: 20 },
+                fontWeight: 700,
+                color: '#3B2A1A',
               }}
             >
-              <MenuItem value="Playfair Display">Playfair Display</MenuItem>
-              <MenuItem value="Inter">Inter</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl sx={{ flex: 1 }}>
-            <Select
-              value={fontSize}
-              onChange={(e) => setFontSize(e.target.value)}
-              IconComponent={ArrowDropDownIcon}
+              Design Size
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <ZoomOutIcon sx={{ color: '#666', fontSize: 20 }} />
+            <Slider
+              value={designSize}
+              onChange={handleDesignSizeChange}
+              min={20}
+              max={80}
+              step={5}
               sx={{
-                borderRadius: '8px',
-                backgroundColor: '#F8F8F8',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#E0E0E0',
+                flex: 1,
+                color: '#3B2A1A',
+                '& .MuiSlider-thumb': {
+                  backgroundColor: '#3B2A1A',
+                  '&:hover': {
+                    boxShadow: '0px 0px 0px 8px rgba(59, 42, 26, 0.16)',
+                  },
                 },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#3B2A1A',
+                '& .MuiSlider-track': {
+                  backgroundColor: '#3B2A1A',
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#3B2A1A',
+                '& .MuiSlider-rail': {
+                  backgroundColor: '#E0E0E0',
                 },
               }}
-            >
-              <MenuItem value="12">12</MenuItem>
-              <MenuItem value="16">16</MenuItem>
-              <MenuItem value="20">20</MenuItem>
-              <MenuItem value="24">24</MenuItem>
-              <MenuItem value="32">32</MenuItem>
-              <MenuItem value="48">48</MenuItem>
-            </Select>
-          </FormControl>
+            />
+            <ZoomInIcon sx={{ color: '#666', fontSize: 20 }} />
+            <Typography sx={{ minWidth: 50, textAlign: 'right', fontSize: 14, fontWeight: 600, color: '#3B2A1A' }}>
+              {designSize}%
+            </Typography>
+          </Box>
         </Box>
+      )}
 
-        {/* Formatting Icons */}
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <IconButton
-            onClick={() => setBold(!bold)}
-            sx={{
-              backgroundColor: bold ? '#3B2A1A' : 'transparent',
-              color: bold ? '#FFFFFF' : '#3B2A1A',
-              border: '1px solid #E0E0E0',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: bold ? '#2A1F15' : '#F5F5F5',
-              },
-            }}
-          >
-            <FormatBoldIcon />
-          </IconButton>
-          <IconButton
-            onClick={() => setItalic(!italic)}
-            sx={{
-              backgroundColor: italic ? '#3B2A1A' : 'transparent',
-              color: italic ? '#FFFFFF' : '#3B2A1A',
-              border: '1px solid #E0E0E0',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: italic ? '#2A1F15' : '#F5F5F5',
-              },
-            }}
-          >
-            <FormatItalicIcon />
-          </IconButton>
-          <IconButton
-            onClick={() => setUnderline(!underline)}
-            sx={{
-              backgroundColor: underline ? '#3B2A1A' : 'transparent',
-              color: underline ? '#FFFFFF' : '#3B2A1A',
-              border: '1px solid #E0E0E0',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: underline ? '#2A1F15' : '#F5F5F5',
-              },
-            }}
-          >
-            <FormatUnderlinedIcon />
-          </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: 'transparent',
-              color: '#3B2A1A',
-              border: '1px solid #E0E0E0',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#F5F5F5',
-              },
-            }}
-          >
-            <FormatAlignLeftIcon />
-          </IconButton>
-          <IconButton
-            sx={{
-              backgroundColor: 'transparent',
-              color: '#3B2A1A',
-              border: '1px solid #E0E0E0',
-              borderRadius: '8px',
-              '&:hover': {
-                backgroundColor: '#F5F5F5',
-              },
-            }}
-          >
-            <PaletteIcon />
-          </IconButton>
-          <Typography sx={{ fontSize: 12, color: '#666', ml: 1 }}>
-            Color
-          </Typography>
-        </Box>
-      </Box>
+
     </Box>
   );
 }

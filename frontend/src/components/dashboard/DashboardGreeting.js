@@ -72,7 +72,7 @@ export default function DashboardGreeting({artist}) {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => router.push('/product-creation')}
+          onClick={() => router.push('/product-creation?fresh=true')}
           sx={{
             backgroundColor: '#3B2A1A',
             color: '#FFFFFF',
