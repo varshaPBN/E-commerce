@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Avatar } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
 const products = [
   {
@@ -35,6 +35,19 @@ const products = [
 ];
 
 export default function TopProducts({products = []}) {
+  // Get product preview image based on category
+  const getCategoryImage = (cat) => {
+    const categoryImages = {
+      'Tshirt': 'https://images.unsplash.com/photo-1651761179569-4ba2aa054997?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Hat': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Hats': 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Mug': 'https://images.unsplash.com/photo-1650959858546-d09833d5317b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Bag': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'Bags': 'https://images.unsplash.com/photo-1732963947955-858ad7d5e540?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    };
+    return categoryImages[cat] || categoryImages['Tshirt'];
+  };
+
   return (
     <Box
       sx={{
@@ -43,7 +56,6 @@ export default function TopProducts({products = []}) {
         p: 3,
         boxShadow: '0px 2px 8px rgba(0,0,0,0.08)',
         border: '1px solid #F0F0F0',
-        width: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -74,15 +86,55 @@ export default function TopProducts({products = []}) {
               borderBottom: index < products.length - 1 ? '1px solid #F0F0F0' : 'none',
             }}
           >
-            <Avatar
-              src={product.design || 'https://via.placeholder.com/60x60'}
-              alt={product.name}
+            <Box
               sx={{
-                width: { xs: 50, md: 60 },
-                height: { xs: 50, md: 60 },
+                position: 'relative',
+                width: { xs: 80, md: 100 },
+                height: { xs: 80, md: 100 },
                 borderRadius: '8px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                backgroundColor: '#F5F5F5',
+                boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
               }}
-            />
+            >
+              {/* Base Product Image */}
+              <Box
+                component="img"
+                src={getCategoryImage(product.category || 'Tshirt')}
+                alt={product.name}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                }}
+              />
+              {/* Design Overlay */}
+              {product.design && (
+                <Box
+                  component="img"
+                  src={product.design}
+                  alt="Design"
+                  sx={{
+                    maxWidth: '55%',
+                    maxHeight: '55%',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 10,
+                    mixBlendMode: 'multiply',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                  }}
+                />
+              )}
+            </Box>
             <Box sx={{ flex: 1 }}>
               <Typography
                 sx={{
