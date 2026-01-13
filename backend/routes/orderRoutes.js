@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const userAuth = require("../middleware/userAuth");
 const Order = mongoose.model("orders");
 const Product = mongoose.model("products");
+const Cart = mongoose.model("cart");
 
 const generateOrderNumber = () => {
   const timestamp = Date.now();
@@ -147,6 +148,12 @@ module.exports = (app) => {
 
       // Populate product details
       await order.populate("items.productId", "name design");
+
+      // Clear cart after order is created (for both online and COD)
+      await Cart.findOneAndUpdate(
+        { userId },
+        { $set: { items: [], updatedAt: Date.now() } }
+      );
 
       res.status(201).json({
         success: true,

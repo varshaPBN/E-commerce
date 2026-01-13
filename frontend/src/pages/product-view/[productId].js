@@ -20,6 +20,7 @@ import { ArrowForward } from "@mui/icons-material";
 import ProductsHeader from "@/components/common/UserProductsHeader";
 import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
+import ShippingForm from "@/components/checkout/ShippingForm";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { getAuthToken, isAuthenticated } from "@/utils/auth";
@@ -37,6 +38,8 @@ export default function ProductView() {
   const [quantity, setQuantity] = useState(1);
   const [deliveryDate, setDeliveryDate] = useState("December 21, 2025");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [buyNowOpen, setBuyNowOpen] = useState(false);
+  const [buyNowLoading, setBuyNowLoading] = useState(false);
 
   async function fetchProduct(productId) {
     try {
@@ -131,6 +134,117 @@ export default function ProductView() {
       });
     }
   }
+
+  const handleBuyNow = () => {
+    // Check authentication
+    if (!isAuthenticated()) {
+      setSnackbar({
+        open: true,
+        message: "Please log in to buy now",
+        severity: "warning",
+      });
+      setTimeout(() => {
+        router.push({
+          pathname: "/user-login",
+          query: { returnUrl: router.asPath }
+        });
+      }, 1500);
+      return;
+    }
+
+    // Validate product selection
+    if (!productId || !product._id) {
+      setSnackbar({
+        open: true,
+        message: "Product information is missing",
+        severity: "error",
+      });
+      return;
+    }
+
+    // Open shipping form
+    setBuyNowOpen(true);
+  };
+
+  const handleBuyNowSubmit = async (shippingData) => {
+    setBuyNowLoading(true);
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: "Please log in to continue",
+          severity: "error",
+        });
+        setBuyNowLoading(false);
+        router.push({
+          pathname: "/user-login",
+          query: { returnUrl: router.asPath }
+        });
+        return;
+      }
+
+      // Determine final color and size (use first available if "None")
+      let finalColor = color;
+      if (color === "None" && product.colors && product.colors.length > 0) {
+        finalColor = product.colors[0];
+      } else if (!product.colors.includes(color) && product.colors.length > 0) {
+        finalColor = product.colors[0];
+      } else if (product.colors.length === 0) {
+        finalColor = "None";
+      }
+
+      let finalSize = size;
+      if (size === "None" && product.sizes && product.sizes.length > 0) {
+        finalSize = product.sizes[0];
+      } else if (!product.sizes.includes(size) && product.sizes.length > 0) {
+        finalSize = product.sizes[0];
+      } else if (product.sizes.length === 0) {
+        finalSize = "None";
+      }
+
+      // Create order directly (bypassing cart)
+      const response = await axios.post(
+        "/api/v1/orders/create",
+        {
+          items: [
+            {
+              productId: productId,
+              quantity: quantity,
+              color: finalColor,
+              size: finalSize,
+            },
+          ],
+          shippingAddress: shippingData.shippingAddress,
+          paymentMethod: "online", // Will be selected on payment page
+          deliveryDate: shippingData.deliveryDate,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        const orderId = response.data.order._id;
+        setBuyNowOpen(false);
+        // Redirect to payment page
+        router.push(`/payment?orderId=${orderId}`);
+      } else {
+        throw new Error(response.data.message || "Failed to create order");
+      }
+    } catch (error) {
+      console.error("Buy Now error:", error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || error.message || "Failed to create order. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setBuyNowLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!productId) return;
@@ -423,6 +537,7 @@ export default function ProductView() {
                   textTransform: "none",
                   "&:hover": { bgcolor: "#2D1F12" },
                 }}
+                onClick={handleBuyNow}
               >
                 Buy Now
               </Button>
@@ -627,6 +742,14 @@ export default function ProductView() {
             ))}
         </Box>
       </Container>
+
+      {/* Shipping Form Dialog for Buy Now */}
+      <ShippingForm
+        open={buyNowOpen}
+        onClose={() => setBuyNowOpen(false)}
+        onSubmit={handleBuyNowSubmit}
+        loading={buyNowLoading}
+      />
 
       {/* Snackbar for notifications */}
       <Snackbar

@@ -5,7 +5,14 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-export default function OrderSummary() {
+export default function OrderSummary({ order }) {
+  if (!order) return null;
+
+  const itemsCount = order.items?.length || 0;
+  const shippingAddress = order.shippingAddress || {};
+  const paymentStatus = order.paymentStatus || 'pending';
+  const paymentMethod = order.paymentMethod || 'online';
+
   return (
     <Box>
       {/* Financial Summary */}
@@ -31,10 +38,10 @@ export default function OrderSummary() {
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Typography sx={{ fontSize: 14, color: '#666' }}>
-            Subtotal (3 items)
+            Subtotal ({itemsCount} {itemsCount === 1 ? 'item' : 'items'})
           </Typography>
           <Typography sx={{ fontSize: 14, color: '#3B2A1A', fontWeight: 500 }}>
-            $195.00
+            ₹{order.subtotal?.toFixed(2) || '0.00'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -42,23 +49,15 @@ export default function OrderSummary() {
             Shipping
           </Typography>
           <Typography sx={{ fontSize: 14, color: '#3B2A1A', fontWeight: 500 }}>
-            $15.00
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography sx={{ fontSize: 14, color: '#666' }}>
-            Tax
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: '#3B2A1A', fontWeight: 500 }}>
-            $16.80
+            ₹{order.shippingCharge?.toFixed(2) || '0.00'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography sx={{ fontSize: 14, color: '#666' }}>
-            Artist Discount (PRO)
+            Tax
           </Typography>
-          <Typography sx={{ fontSize: 14, color: '#4CAF50', fontWeight: 500 }}>
-            -$10.00
+          <Typography sx={{ fontSize: 14, color: '#3B2A1A', fontWeight: 500 }}>
+            ₹{order.taxAmount?.toFixed(2) || '0.00'}
           </Typography>
         </Box>
         <Box
@@ -85,7 +84,7 @@ export default function OrderSummary() {
               color: '#3B2A1A',
             }}
           >
-            $216.80
+            ₹{order.totalAmount?.toFixed(2) || '0.00'}
           </Typography>
         </Box>
       </Box>
@@ -114,17 +113,15 @@ export default function OrderSummary() {
           </Typography>
         </Box>
         <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#3B2A1A', mb: 1 }}>
-          Alex Morgan
+          {shippingAddress.name || 'N/A'}
         </Typography>
         <Typography sx={{ fontSize: 14, color: '#666', mb: 1, lineHeight: 1.6 }}>
-          123 Creator Lane, Apt 4B
+          {shippingAddress.address || ''}
           <br />
-          Beverly Hills, Los Angeles, CA 90210
-          <br />
-          United States
+          {shippingAddress.city || ''}, {shippingAddress.state || ''} {shippingAddress.pincode || ''}
         </Typography>
         <Typography sx={{ fontSize: 14, color: '#666' }}>
-          +1(555)123-4567
+          {shippingAddress.phone || 'N/A'}
         </Typography>
       </Box>
 
@@ -153,16 +150,24 @@ export default function OrderSummary() {
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
           <Typography sx={{ fontSize: 14, color: '#3B2A1A', fontWeight: 600 }}>
-            Business Card ••8842
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: '#666' }}>
-            Exp: 12/25
+            {paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment (Razorpay)'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CheckCircleIcon sx={{ color: '#4CAF50', fontSize: 16 }} />
-          <Typography sx={{ fontSize: 14, color: '#4CAF50', fontWeight: 600 }}>
-            Paid
+          <CheckCircleIcon
+            sx={{
+              color: paymentStatus === 'paid' ? '#4CAF50' : '#FF9800',
+              fontSize: 16,
+            }}
+          />
+          <Typography
+            sx={{
+              fontSize: 14,
+              color: paymentStatus === 'paid' ? '#4CAF50' : '#FF9800',
+              fontWeight: 600,
+            }}
+          >
+            {paymentStatus === 'paid' ? 'Paid' : paymentStatus === 'pending' ? 'Pending' : 'Failed'}
           </Typography>
         </Box>
       </Box>
