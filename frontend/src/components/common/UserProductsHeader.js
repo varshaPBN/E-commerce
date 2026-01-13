@@ -22,9 +22,15 @@ export default function ProductsHeader({ logo }) {
 
       const response = await axios.get("/api/v1/get/cart/", {
         headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200 || status === 404,
       });
 
       let items = [];
+      if (response.status === 404 || !response.data.cart) {
+        setCartCount(0);
+        return;
+      }
+
       if (response.data.cart?.items) {
         items = response.data.cart.items;
       } else if (response.data.items) {

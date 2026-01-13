@@ -9,19 +9,27 @@ import {
   Paper,
   Divider,
   CircularProgress,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import { Delete, Add, Remove, Balance } from "@mui/icons-material";
+import { useRouter } from "next/router";
 import ProductsHeader from "@/components/common/ProductsHeader";
 import BackButton from "@/components/common/BackButton";
 import ProductsCard from "@/components/common/ProductsCard";
+import ShippingForm from "@/components/checkout/ShippingForm";
 import { blue } from "@mui/material/colors";
 import axios from "axios";
 import { getAuthToken } from "@/utils/auth";
 
 const CartPage = () => {
+  const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   // Fetch cart items from API
   const fetchCart = async () => {
@@ -65,11 +73,16 @@ const CartPage = () => {
       });
 
       setCartItems(cartItems);
+      
+      // Trigger cart count refresh in header
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       if (error.response?.status === 401) {
         setAuthError(true);
       } else if (error.response?.status === 404) {
         setCartItems([]);
+        // Cart is empty, trigger update
+        window.dispatchEvent(new CustomEvent("cartUpdated"));
       }
     } finally {
       setLoading(false);
@@ -167,6 +180,9 @@ const CartPage = () => {
 
       // Update local state
       setCartItems((items) => items.filter((cartItem) => cartItem.id !== item.id));
+      
+      // Trigger cart count refresh in header immediately
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       if (error.response?.status === 401) {
         setAuthError(true);
@@ -184,6 +200,86 @@ const CartPage = () => {
   const shipping = 50;
   const taxes = 10;
   const total = subtotal + shipping + taxes;
+
+  const handleCheckout = async (shippingData) => {
+    if (cartItems.length === 0) {
+      setSnackbar({
+        open: true,
+        message: "Your cart is empty",
+        severity: "warning",
+      });
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: "Please login to continue",
+          severity: "error",
+        });
+        setCheckoutLoading(false);
+        return;
+      }
+
+      // Prepare order items from cart
+      // Note: Backend will use first available color/size if "None" is provided
+      const items = cartItems.map((item) => ({
+        productId: typeof item.productId === 'object' ? item.productId._id || item.productId.toString() : item.productId,
+        quantity: item.quantity,
+        color: item.color || "None",
+        size: item.size || "None",
+      }));
+
+      // Create order
+      const response = await axios.post(
+        "/api/v1/orders/create",
+        {
+          items,
+          shippingAddress: shippingData.shippingAddress,
+          paymentMethod: "online", // Will be selected on payment page
+          deliveryDate: shippingData.deliveryDate,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        const orderId = response.data.order._id;
+        setCheckoutOpen(false);
+        
+        // Clear local cart state and update badge immediately
+        setCartItems([]);
+        window.dispatchEvent(new CustomEvent("cartUpdated"));
+        
+        // Redirect to payment page
+        router.push(`/payment?orderId=${orderId}`);
+      } else {
+        throw new Error(response.data.message || "Failed to create order");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Request payload:", {
+        items,
+        shippingAddress: shippingData.shippingAddress,
+        paymentMethod: "online",
+        deliveryDate: shippingData.deliveryDate,
+      });
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || error.message || "Failed to create order. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <Box sx={{ bgcolor: "#FDF8F2", minHeight: "100vh", pb: 4 }}>
@@ -386,18 +482,19 @@ const CartPage = () => {
             </Box>
           </Box>
 
-          {/* Order Summary Section */}
-          <Box>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 2,
-                bgcolor: "#E8E0D5",
-                position: "sticky",
-                top: 20,
-              }}
-            >
+          {/* Order Summary Section - Only show when cart has items */}
+          {cartItems.length > 0 && (
+            <Box>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  borderRadius: 2,
+                  bgcolor: "#E8E0D5",
+                  position: "sticky",
+                  top: 20,
+                }}
+              >
               <Typography variant="h4" sx={{ fontWeight: 700, mb: 4 }}>
                 Order Summary
               </Typography>
@@ -512,6 +609,8 @@ const CartPage = () => {
                 fullWidth
                 variant="contained"
                 size="large"
+                disabled={cartItems.length === 0}
+                onClick={() => setCheckoutOpen(true)}
                 sx={{
                   bgcolor: "#3D2817",
                   color: "white",
@@ -521,14 +620,40 @@ const CartPage = () => {
                   fontSize: 18,
                   fontWeight: 600,
                   "&:hover": { bgcolor: "#2D1F12" },
+                  "&:disabled": { bgcolor: "#ccc", color: "#666" },
                 }}
               >
-                Click Here To Pay
+                {cartItems.length === 0 ? "Cart is Empty" : "Proceed to Checkout"}
               </Button>
             </Paper>
           </Box>
+          )}
         </Box>
       </Container>
+
+      {/* Shipping Form Dialog */}
+      <ShippingForm
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+        onSubmit={handleCheckout}
+        loading={checkoutLoading}
+      />
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

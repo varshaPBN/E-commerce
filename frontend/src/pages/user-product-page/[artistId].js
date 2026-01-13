@@ -150,13 +150,16 @@ export default function ProductPage() {
                 return;
             }
 
-            // Add to cart with default values (can be enhanced later with size/color selection)
+            // Use first available color/size from product, or "None" if not available
+            const color = product.colors && product.colors.length > 0 ? product.colors[0] : "None";
+            const size = product.sizes && product.sizes.length > 0 ? product.sizes[0] : "None";
+
             const response = await axios.post(
                 "/api/v1/add/cart",
                 {
                     productId: product._id,
-                    color: "None",
-                    size: "None",
+                    color,
+                    size,
                     quantity: 1,
                 },
                 {
