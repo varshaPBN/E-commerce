@@ -31,7 +31,6 @@ export default function ReviewPricing() {
       setProductTitle(parsed.product);
     }
     } else {
-      // If no data, redirect back to product creation
       router.push('/product-creation');
     }
   }, [router]);
@@ -107,13 +106,13 @@ export default function ReviewPricing() {
         return;
       }
 
-      // Prepare product data for backend
+      // Prepare product data for backend - send design as base64 directly
       const productPayload = {
         name: productTitle,
-        description: description,
+        description: description || '',
         category: mapCategory(productData.category),
         price: sellingPrice,
-        design: productData.designFile || '',
+        design: productData.designFile || '', // Send base64 directly
         colors: [mapColor(productData.selectedColor)],
         sizes: mapSizes(productData.selectedSize),
       };

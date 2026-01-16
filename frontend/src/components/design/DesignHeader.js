@@ -1,8 +1,26 @@
-import React from 'react';
-import { Box, Typography, Avatar } from '@mui/material';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import React, { useState } from 'react';
+import { Box, Typography, Avatar, Menu, MenuItem } from '@mui/material';
+import { useRouter } from 'next/router';
 
 export default function DesignHeader() {
+  const router = useRouter();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('productCreationData');
+    handleMenuClose();
+    router.push('/');
+  };
   return (
     <Box
       sx={{
@@ -15,20 +33,6 @@ export default function DesignHeader() {
         backgroundColor: '#F7F3EB',
       }}
     >
-      {/* Logo */}
-      {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AutoAwesomeIcon sx={{ color: '#9C27B0', fontSize: 28 }} />
-        <Typography
-          sx={{
-            fontFamily: "'Playfair Display'",
-            fontSize: { xs: 20, md: 24 },
-            fontWeight: 700,
-            color: '#3B2A1A',
-          }}
-        >
-          Artloom
-        </Typography>
-      </Box> */}
       <Box
         component="img"
         src="/logo.png"
@@ -48,6 +52,9 @@ export default function DesignHeader() {
         }}
       >
         <Typography
+          onClick={() => {
+            router.push('/dashboard');
+          }}
           sx={{
             fontSize: 16,
             fontWeight: 400,
@@ -94,15 +101,33 @@ export default function DesignHeader() {
       </Box>
 
       {/* Profile */}
-      <Avatar
-        src="https://via.placeholder.com/40x40/FFB6C1/FFFFFF?text=K"
-        alt="Profile"
-        sx={{
-          width: { xs: 36, md: 40 },
-          height: { xs: 36, md: 40 },
-          cursor: 'pointer',
-        }}
-      />
+      <Box>
+        <Avatar
+          onClick={handleAvatarClick}
+          src="https://via.placeholder.com/40x40/FFB6C1/FFFFFF?text=K"
+          alt="Profile"
+          sx={{
+            width: { xs: 36, md: 40 },
+            height: { xs: 36, md: 40 },
+            cursor: 'pointer',
+          }}
+        />
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleMenuClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+        >
+          <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+        </Menu>
+      </Box>
     </Box>
   );
 }
