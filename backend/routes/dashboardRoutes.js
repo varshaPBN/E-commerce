@@ -14,10 +14,45 @@ module.exports = (app) => {
       const artistProducts = await Product.find({ artistId }).select('_id');
       const productIds = artistProducts.map(p => p._id);
 
+      // If no products, return empty analytics
+      if (productIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          analytics: {
+            revenue: {
+              value: '0.00',
+              change: '+0%',
+              changeType: 'neutral'
+            },
+            orders: {
+              value: 0,
+              change: '+0%',
+              changeType: 'neutral'
+            },
+            products: {
+              value: 0,
+              change: '+0%',
+              changeType: 'neutral'
+            },
+            reviews: {
+              value: '0 New',
+              change: '0 Avg',
+              changeType: 'neutral'
+            }
+          }
+        });
+      }
+
       // Get all orders containing artist's products
-      const orders = await Order.find({
-        'items.productId': { $in: productIds }
-      }).populate('items.productId');
+      // Note: MongoDB handles empty $in arrays gracefully (returns no results)
+      const orders = productIds.length > 0 
+        ? await Order.find({
+            'items.productId': { $in: productIds }
+          }).populate({
+            path: 'items.productId',
+            select: '_id name design category price'
+          })
+        : [];
 
       // Calculate revenue (only from artist's products)
       let totalRevenue = 0;
@@ -26,7 +61,8 @@ module.exports = (app) => {
 
       orders.forEach(order => {
         order.items.forEach(item => {
-          if (productIds.some(id => id.equals(item.productId._id))) {
+          // Check if productId exists and is populated before accessing _id
+          if (item.productId && item.productId._id && productIds.some(id => id.equals(item.productId._id))) {
             totalRevenue += item.price * item.quantity;
             itemsSold += item.quantity;
           }
@@ -49,7 +85,7 @@ module.exports = (app) => {
       let recentRevenue = 0;
       recentOrders.forEach(order => {
         order.items.forEach(item => {
-          if (productIds.some(id => id.equals(item.productId._id))) {
+          if (item.productId && item.productId._id && productIds.some(id => id.equals(item.productId._id))) {
             recentRevenue += item.price * item.quantity;
           }
         });
@@ -58,7 +94,7 @@ module.exports = (app) => {
       let previousRevenue = 0;
       previousOrders.forEach(order => {
         order.items.forEach(item => {
-          if (productIds.some(id => id.equals(item.productId._id))) {
+          if (item.productId && item.productId._id && productIds.some(id => id.equals(item.productId._id))) {
             previousRevenue += item.price * item.quantity;
           }
         });
@@ -135,19 +171,33 @@ module.exports = (app) => {
       const artistProducts = await Product.find({ artistId }).select('_id');
       const productIds = artistProducts.map(p => p._id);
 
+      // If no products, return empty orders array
+      if (productIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          orders: []
+        });
+      }
+
       // Get orders containing artist's products
       const orders = await Order.find({
         'items.productId': { $in: productIds }
       })
-        .populate('items.productId', 'name design')
-        .populate('userId', 'name email')
+        .populate({
+          path: 'items.productId',
+          select: 'name design _id'
+        })
+        .populate({
+          path: 'userId',
+          select: 'name email'
+        })
         .sort({ createdAt: -1 })
         .limit(limit);
 
       // Filter and format orders to show only artist's products
       const formattedOrders = orders.map(order => {
         const artistItems = order.items.filter(item => 
-          productIds.some(id => id.equals(item.productId._id))
+          item.productId && item.productId._id && productIds.some(id => id.equals(item.productId._id))
         );
 
         const orderTotal = artistItems.reduce((sum, item) => 
@@ -191,17 +241,28 @@ module.exports = (app) => {
       const artistProducts = await Product.find({ artistId });
       const productIds = artistProducts.map(p => p._id);
 
+      // If no products, return empty array
+      if (productIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          products: []
+        });
+      }
+
       // Get all orders with artist's products
       const orders = await Order.find({
         'items.productId': { $in: productIds }
-      }).populate('items.productId');
+      }).populate({
+        path: 'items.productId',
+        select: '_id name design category price'
+      });
 
       // Calculate sales per product
       const productSales = {};
 
       orders.forEach(order => {
         order.items.forEach(item => {
-          if (productIds.some(id => id.equals(item.productId._id))) {
+          if (item.productId && item.productId._id && productIds.some(id => id.equals(item.productId._id))) {
             const productId = item.productId._id.toString();
             
             if (!productSales[productId]) {
@@ -249,18 +310,24 @@ module.exports = (app) => {
 
   // Get artist profile info
   app.get("/api/v1/artist/profile", userAuth, async (req, res) => {
-  try {
-    const artist = await Artists.findById(req.user.id);
-    if (!artist) {
-      return res.status(404).json({ message: "Artist not found" });
+    try {
+      console.log("Profile request - User ID:", req.user?.id);
+      const artist = await Artists.findById(req.user.id);
+      if (!artist) {
+        console.error("Artist not found for ID:", req.user.id);
+        return res.status(404).json({ message: "Artist not found" });
+      }
+      res.status(200).json({ 
+        message: "Artist profile fetched successfully", 
+        artist 
+      });
+    } catch (error) {
+      console.error("Profile endpoint error:", error);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        message: error.message,
+        error: error.toString()
+      });
     }
-    res.status(200).json({ 
-      message: "Artist profile fetched successfully", 
-      artist 
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
-  }
-});
+  });
 };

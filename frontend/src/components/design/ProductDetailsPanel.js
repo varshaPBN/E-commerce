@@ -4,20 +4,24 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import axios from 'axios';
 
 export default function ProductDetailsPanel() {
-  const [category, setCategory] = useState('Tshirt');
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [colors, setColors] = useState([]);
   const [loadingColors, setLoadingColors] = useState(true);
   const [sizes, setSizes] = useState([]);
   const [loadingSizes, setLoadingSizes] = useState(true);
+  // Use consistent initial state for SSR hydration
   const [product, setProduct] = useState('');
-  const [selectedColor, setSelectedColor] = useState('white');
+  const [selectedColor, setSelectedColor] = useState('black');
   const [view, setView] = useState('FRONT');
   const [selectedSize, setSelectedSize] = useState([]);
   const [designFile, setDesignFile] = useState(null);
   const [designPreview, setDesignPreview] = useState(null);
+  const [category, setCategory] = useState('Tshirt');
   const fileInputRef = useRef(null);
+  const categoryRestoredRef = useRef(false); // Track if category has been restored from localStorage
+  const colorRestoredRef = useRef(false); // Track if color has been restored from localStorage
+  
     // Fetch categories from backend
   useEffect(() => {
     const fetchCategories = async () => {
@@ -25,12 +29,15 @@ export default function ProductDetailsPanel() {
         const response = await axios.get('/api/v1/artist/products/categories');
         if (response.data.categories && response.data.categories.length > 0) {
           setCategories(response.data.categories);
-          setCategory(response.data.categories[0]); // Set first category as default
+          // Only set default category if we haven't restored one from localStorage
+          if (!categoryRestoredRef.current) {
+            setCategory(response.data.categories[0]); // Set first category as default
+          }
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
         // Fallback to backend categories if API fails
-        setCategories(['Tshirt', 'Hats', 'Mug', 'Bags']);
+        setCategories(['Tshirt', 'Hat', 'Mug', 'Bag']);
       } finally {
         setLoadingCategories(false);
       }
@@ -45,7 +52,6 @@ export default function ProductDetailsPanel() {
         'Black': '#000000',
         'Red': '#FF0000',
         'Blue': '#0000FF',
-        'Green': '#008000',
       };
       return colorMap[colorName] || '#FFFFFF';
     };
@@ -58,6 +64,17 @@ export default function ProductDetailsPanel() {
     useEffect(() => {
       const fetchColors = async () => {
         try {
+          // Check localStorage first to see if color was already restored
+          const savedData = typeof window !== 'undefined' ? localStorage.getItem('productCreationData') : null;
+          const hasSavedColor = savedData ? (() => {
+            try {
+              const parsed = JSON.parse(savedData);
+              return parsed.selectedColor && parsed.selectedColor !== null && parsed.selectedColor !== '';
+            } catch {
+              return false;
+            }
+          })() : false;
+          
           const response = await axios.get('/api/v1/artist/products/colors');
           if (response.data.colors && response.data.colors.length > 0) {
             // Transform backend colors to frontend format
@@ -67,20 +84,41 @@ export default function ProductDetailsPanel() {
               backendName: colorName
             }));
             setColors(transformedColors);
-            if (transformedColors.length > 0) {
-              setSelectedColor(transformedColors[0].name);
+            // Only set default color if we haven't restored one from localStorage
+            if (!colorRestoredRef.current && !hasSavedColor) {
+              // Default to black if available, otherwise first color
+              const blackColor = transformedColors.find(c => c.name === 'black');
+              if (blackColor) {
+                setSelectedColor('black');
+              } else if (transformedColors.length > 0) {
+                setSelectedColor(transformedColors[0].name);
+              }
             }
           }
         } catch (error) {
           console.error('Error fetching colors:', error);
+          // Check localStorage before setting fallback
+          const savedData = typeof window !== 'undefined' ? localStorage.getItem('productCreationData') : null;
+          const hasSavedColor = savedData ? (() => {
+            try {
+              const parsed = JSON.parse(savedData);
+              return parsed.selectedColor && parsed.selectedColor !== null && parsed.selectedColor !== '';
+            } catch {
+              return false;
+            }
+          })() : false;
+          
           // Fallback to default colors if API fails
           setColors([
             { name: 'white', value: '#FFFFFF', backendName: 'White' },
             { name: 'black', value: '#000000', backendName: 'Black' },
             { name: 'red', value: '#FF0000', backendName: 'Red' },
             { name: 'blue', value: '#0000FF', backendName: 'Blue' },
-            { name: 'green', value: '#008000', backendName: 'Green' },
           ]);
+          // Only set default color if we haven't restored one from localStorage
+          if (!colorRestoredRef.current && !hasSavedColor) {
+            setSelectedColor('black'); // Default to black
+          }
         } finally {
           setLoadingColors(false);
         }
@@ -110,19 +148,35 @@ export default function ProductDetailsPanel() {
     fetchSizes();
   }, []);
 
-  // Restore all data from localStorage on mount
+  // Track if component has mounted to prevent save on initial mount
+  const [hasMounted, setHasMounted] = useState(false);
+  const isRestoringRef = useRef(true); // Track if we're currently restoring
+  const restoredDesignRef = useRef(null); // Store the restored design value
+  const designRestoredRef = useRef(false); // Track if design has been successfully restored
+
+  // Load from localStorage after hydration (client-side only)
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    isRestoringRef.current = true; // Mark that we're restoring
+    
     const savedData = localStorage.getItem('productCreationData');
     if (savedData) {
       const parsed = JSON.parse(savedData);
+      // Check if this is a fresh start (designFile is explicitly null)
+      const isFreshStart = parsed.designFile === null && parsed.isFreshStart === true;
+      
+      // Restore all values from localStorage
       if (parsed.category) {
         setCategory(parsed.category);
+        categoryRestoredRef.current = true; // Mark category as restored
       }
-      if (parsed.product) {
+      if (parsed.product !== undefined) {
         setProduct(parsed.product);
       }
       if (parsed.selectedColor) {
         setSelectedColor(parsed.selectedColor);
+        colorRestoredRef.current = true; // Mark color as restored
       }
       if (parsed.view) {
         setView(parsed.view);
@@ -130,25 +184,134 @@ export default function ProductDetailsPanel() {
       if (parsed.selectedSize && Array.isArray(parsed.selectedSize)) {
         setSelectedSize(parsed.selectedSize);
       }
-      if (parsed.designFile) {
+      // Restore designPreview ONLY if it exists AND it's NOT a fresh start
+      if (!isFreshStart && parsed.designFile && parsed.designFile !== null && parsed.designFile !== '') {
+        restoredDesignRef.current = parsed.designFile; // Store in ref
+        designRestoredRef.current = true; // Mark as restored
         setDesignPreview(parsed.designFile);
+      } else {
+        // Fresh start - explicitly clear design
+        setDesignPreview(null);
+        restoredDesignRef.current = null;
+        designRestoredRef.current = false;
       }
+    } else {
+      // No saved data - this is a fresh start, allow defaults
+      categoryRestoredRef.current = false;
+      colorRestoredRef.current = false;
+      setDesignPreview(null);
+      restoredDesignRef.current = null;
+      designRestoredRef.current = false;
     }
-  }, []);
+    
+    // Mark restoration as complete after state updates
+    // Use a delay to ensure React has processed all state updates
+    setTimeout(() => {
+      isRestoringRef.current = false;
+      setHasMounted(true);
+    }, 300); // Give time for all state updates to complete
+  }, []); // Empty deps - only run once on mount
 
     
-  // Save to localStorage whenever data changes
+  // Save to localStorage whenever data changes (but not on initial mount or during restore)
   useEffect(() => {
+    if (!hasMounted) return; // Don't save until after initial mount/restore
+    if (isRestoringRef.current) return; // Don't save while restoring
+    
+    // Always check localStorage first to preserve existing design
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('productCreationData');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        // If localStorage has a design but current designPreview is null/empty, preserve it
+        if ((!designPreview || designPreview === null || designPreview === '') && 
+            parsed.designFile && parsed.designFile !== null && parsed.designFile !== '') {
+          // Only restore if we haven't already restored it (prevents loops)
+          if (!designRestoredRef.current || designPreview !== parsed.designFile) {
+            // Use requestAnimationFrame to ensure state update happens after current render
+            requestAnimationFrame(() => {
+              setDesignPreview(parsed.designFile);
+              restoredDesignRef.current = parsed.designFile;
+              designRestoredRef.current = true;
+            });
+          }
+          // Save with the preserved design (don't overwrite with null)
+          const productData = {
+            category: parsed.category || category, // Preserve saved category
+            product,
+            selectedColor: parsed.selectedColor || selectedColor, // Preserve saved color
+            view,
+            selectedSize,
+            designFile: parsed.designFile, // Preserve saved design
+            designSize: parsed.designSize,
+            designPosition: parsed.designPosition,
+            isFreshStart: false, // Clear fresh start flag when preserving design
+          };
+    localStorage.setItem('productCreationData', JSON.stringify(productData));
+    return; // Don't proceed with saving null
+        }
+      }
+    }
+    
+    // Normal save - use designPreview if it exists, otherwise use restored design from ref
+    const designToSave = designPreview || restoredDesignRef.current;
+    
+    // Only save if we have a design or if user explicitly cleared it (and it was previously null)
+    // Don't save null if we have a restored design
+    if (!designToSave && designRestoredRef.current && restoredDesignRef.current) {
+      // User hasn't cleared it, preserve the restored design
+      return;
+    }
+    
+    // Only preserve category/color from localStorage during restoration, not after user interaction
+    const savedData = typeof window !== 'undefined' ? localStorage.getItem('productCreationData') : null;
+    let categoryToSave = category;
+    let colorToSave = selectedColor;
+    
+    // Only preserve from localStorage if we're currently restoring (prevents API fetch from overwriting during restore)
+    // After restoration is complete, allow user to change category freely
+    if (savedData && isRestoringRef.current) {
+      try {
+        const parsed = JSON.parse(savedData);
+        // Only use saved category if we're still restoring (prevents API fetch from overwriting)
+        if (parsed.category && isRestoringRef.current) {
+          categoryToSave = parsed.category;
+          // Also update state if it's different (in case API fetch overwrote it)
+          if (category !== parsed.category) {
+            setCategory(parsed.category);
+          }
+        }
+        // Preserve color too, but only during restoration
+        if (parsed.selectedColor && isRestoringRef.current) {
+          colorToSave = parsed.selectedColor;
+          if (selectedColor !== parsed.selectedColor) {
+            setSelectedColor(parsed.selectedColor);
+          }
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
     const productData = {
-      category,
+      category: categoryToSave,
       product,
-      selectedColor,
+      selectedColor: colorToSave,
       view,
       selectedSize,
-      designFile: designPreview, // Store base64 string
+      designFile: designToSave, // Use designPreview or restored design
+      designSize: undefined, // Will be saved by ProductPreviewPanel
+      designPosition: undefined, // Will be saved by ProductPreviewPanel
+      isFreshStart: false, // Clear fresh start flag when user uploads design
     };
     localStorage.setItem('productCreationData', JSON.stringify(productData));
-  }, [category, product, selectedColor, view, selectedSize, designPreview]);
+    
+    // Update restoredDesignRef if we're saving a design
+    if (designToSave) {
+      restoredDesignRef.current = designToSave;
+      designRestoredRef.current = true;
+    }
+  }, [category, product, selectedColor, view, selectedSize, designPreview, hasMounted]);
 
   // Handle file upload
   const handleFileChange = (e) => {
