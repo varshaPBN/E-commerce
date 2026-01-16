@@ -22,7 +22,14 @@ export default function ProductsHeader() {
 
       const response = await axios.get("/api/v1/get/cart/", {
         headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200 || status === 404,
       });
+
+      // Handle empty cart (404 response)
+      if (response.status === 404 || !response.data?.cart) {
+        setCartCount(0);
+        return;
+      }
 
       let items = [];
       if (response.data.cart?.items) {

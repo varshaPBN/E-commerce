@@ -3,13 +3,47 @@ import { Box, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 
-export default function OrderTimeline() {
-  const steps = [
-    { label: 'Order Placed', date: 'Oct 24, 10:42 AM', completed: true },
-    { label: 'Processing', date: 'Oct 25, 09:35 AM', completed: true },
-    { label: 'Shipped', date: 'Oct 26, 02:30 PM', completed: true, tracking: 'FedEx Tracking: 78239120' },
-    { label: 'Delivered', date: '', completed: false },
-  ];
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+export default function OrderTimeline({ order }) {
+  if (!order) return null;
+
+  const orderStatus = order.orderStatus || 'pending';
+  const orderDate = formatDate(order.createdAt);
+
+  const getSteps = () => {
+    const allSteps = [
+      { key: 'pending', label: 'Order Placed', date: orderDate, completed: true },
+      { key: 'confirmed', label: 'Confirmed', date: '', completed: false },
+      { key: 'processing', label: 'Processing', date: '', completed: false },
+      { key: 'shipped', label: 'Shipped', date: '', completed: false },
+      { key: 'delivered', label: 'Delivered', date: '', completed: false },
+    ];
+
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+    const currentIndex = statusOrder.indexOf(orderStatus);
+
+    return allSteps.map((step, index) => {
+      const stepIndex = statusOrder.indexOf(step.key);
+      const completed = stepIndex <= currentIndex && currentIndex >= 0;
+      return {
+        ...step,
+        completed,
+        date: completed && step.key === orderStatus ? orderDate : (step.date || ''),
+      };
+    });
+  };
+
+  const steps = getSteps();
 
   return (
     <Box
@@ -24,7 +58,7 @@ export default function OrderTimeline() {
       <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         {steps.map((step, index) => (
           <Box
-            key={index}
+            key={step.key || index}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -96,19 +130,6 @@ export default function OrderTimeline() {
                   }}
                 >
                   {step.date}
-                </Typography>
-              )}
-              {step.tracking && (
-                <Typography
-                  sx={{
-                    fontSize: 11,
-                    color: '#3B2A1A',
-                    textAlign: 'center',
-                    mt: 0.5,
-                    fontWeight: 600,
-                  }}
-                >
-                  {step.tracking}
                 </Typography>
               )}
             </Box>

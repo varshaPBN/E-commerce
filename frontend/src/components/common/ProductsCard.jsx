@@ -55,12 +55,20 @@ export default function ProductsCard({
         return;
       }
 
+      // Fetch product details to get available colors/sizes
+      const productResponse = await axios.get(`/api/v1/user/products/${id}`);
+      const product = productResponse.data.product;
+      
+      // Use first available color/size, or "None" if not available
+      const color = product.colors && product.colors.length > 0 ? product.colors[0] : "None";
+      const size = product.sizes && product.sizes.length > 0 ? product.sizes[0] : "None";
+
       const response = await axios.post(
         "/api/v1/add/cart",
         {
           productId: id,
-          color: "None",
-          size: "None",
+          color,
+          size,
           quantity: 1,
         },
         {

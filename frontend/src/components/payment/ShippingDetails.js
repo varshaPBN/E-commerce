@@ -1,28 +1,53 @@
 import { Paper, Typography } from "@mui/material";
 
-export default function ShippingDetails() {
+export default function ShippingDetails({ shippingAddress, deliveryDate }) {
+  if (!shippingAddress) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography fontWeight={600} mb={1}>
+          Shipping To
+        </Typography>
+        <Typography color="text.secondary">No shipping address provided</Typography>
+      </Paper>
+    );
+  }
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    const d = new Date(date);
+    return d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <Paper sx={{ p: 3 }}>
       <Typography fontWeight={600} mb={1}>
         Shipping To
       </Typography>
 
-      <Typography>Alex Morgan</Typography>
+      <Typography>{shippingAddress.name}</Typography>
       <Typography fontSize={13} color="text.secondary">
-        123 Creator Lane, Apt 4B
+        {shippingAddress.address}
         <br />
-        Beverly Hills, Los Angeles
+        {shippingAddress.city}, {shippingAddress.state}
         <br />
-        CA 90210, United States
+        {shippingAddress.pincode}
       </Typography>
 
-      <Typography fontSize={13} mt={1}>
-        +1 (555) 123-4567
-      </Typography>
+      {shippingAddress.phone && (
+        <Typography fontSize={13} mt={1}>
+          {shippingAddress.phone}
+        </Typography>
+      )}
 
-      <Typography fontSize={12} color="text.secondary" mt={2}>
-        Estimated Delivery: Oct 28, 2023
-      </Typography>
+      {deliveryDate && (
+        <Typography fontSize={12} color="text.secondary" mt={2}>
+          Estimated Delivery: {formatDate(deliveryDate)}
+        </Typography>
+      )}
     </Paper>
   );
 }

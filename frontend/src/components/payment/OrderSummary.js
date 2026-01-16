@@ -1,29 +1,32 @@
-import { Box, Paper, Typography, Divider, Button } from "@mui/material";
+import { Box, Paper, Typography, Divider } from "@mui/material";
 
-export default function OrderSummary() {
+export default function OrderSummary({ subtotal = 0, shippingCharge = 0, taxAmount = 0, totalAmount = 0 }) {
   return (
     <Paper sx={{ p: 3 }}>
       <Typography fontWeight={600} mb={2}>
         Order Summary
       </Typography>
 
-      {[
-        ["Subtotal (3 items)", "$195.00"],
-        ["Shipping Charge", "$15.00"],
-        ["Tax (8.6%)", "$16.80"],
-        ["Promo Discount", "-$10.00"],
-      ].map(([label, value]) => (
-        <Box key={label} sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Typography fontSize={14}>{label}</Typography>
-          <Typography fontSize={14}>{value}</Typography>
-        </Box>
-      ))}
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Typography fontSize={14}>Subtotal</Typography>
+        <Typography fontSize={14}>₹{subtotal.toFixed(2)}</Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Typography fontSize={14}>Shipping Charge</Typography>
+        <Typography fontSize={14}>₹{shippingCharge.toFixed(2)}</Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Typography fontSize={14}>Tax</Typography>
+        <Typography fontSize={14}>₹{taxAmount.toFixed(2)}</Typography>
+      </Box>
 
       <Divider sx={{ my: 2 }} />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Typography fontWeight={600}>Total Amount</Typography>
-        <Typography fontWeight={700}>$216.80</Typography>
+        <Typography fontWeight={700}>₹{totalAmount.toFixed(2)}</Typography>
       </Box>
 
       {/* <Button

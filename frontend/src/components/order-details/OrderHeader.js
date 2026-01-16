@@ -2,9 +2,48 @@ import React from 'react';
 import { Box, Typography, Button, Chip, Breadcrumbs, Link } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import HomeIcon from '@mui/icons-material/Home';
 
-export default function OrderHeader() {
+const getStatusColor = (status) => {
+  const statusMap = {
+    pending: '#FF9800',
+    confirmed: '#2196F3',
+    processing: '#2196F3',
+    shipped: '#4CAF50',
+    delivered: '#4CAF50',
+    cancelled: '#F44336',
+  };
+  return statusMap[status] || '#666';
+};
+
+const getStatusLabel = (status) => {
+  return status ? status.toUpperCase() : 'PENDING';
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+export default function OrderHeader({ order }) {
+  if (!order) return null;
+
+  const orderDate = formatDate(order.createdAt);
+  const deliveryDate = order.deliveryDate
+    ? new Date(order.deliveryDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : '';
+
   return (
     <Box>
       {/* Breadcrumbs */}
@@ -14,7 +53,7 @@ export default function OrderHeader() {
         aria-label="breadcrumb"
       >
         <Link
-          href="#"
+          href="/"
           sx={{
             color: '#666',
             textDecoration: 'none',
@@ -22,7 +61,7 @@ export default function OrderHeader() {
             '&:hover': { textDecoration: 'underline' },
           }}
         >
-          Studio Dashboard
+          Home
         </Link>
         <Link
           href="#"
@@ -33,10 +72,10 @@ export default function OrderHeader() {
             '&:hover': { textDecoration: 'underline' },
           }}
         >
-          Supply Orders
+          Orders
         </Link>
         <Typography sx={{ color: '#3B2A1A', fontSize: 14 }}>
-          Order #ORD-7782-XJ
+          Order #{order.orderNumber}
         </Typography>
       </Breadcrumbs>
 
@@ -60,12 +99,12 @@ export default function OrderHeader() {
                 color: '#3B2A1A',
               }}
             >
-              Order #ORD-7782-XJ
+              Order #{order.orderNumber}
             </Typography>
             <Chip
-              label="SHIPPED"
+              label={getStatusLabel(order.orderStatus)}
               sx={{
-                backgroundColor: '#4CAF50',
+                backgroundColor: getStatusColor(order.orderStatus),
                 color: '#FFFFFF',
                 fontWeight: 600,
                 fontSize: 12,
@@ -79,7 +118,7 @@ export default function OrderHeader() {
               color: '#666',
             }}
           >
-            Placed on October 24, 2023 at 10:42 AM
+            Placed on {orderDate}
           </Typography>
         </Box>
         <Box
@@ -133,15 +172,17 @@ export default function OrderHeader() {
       </Box>
 
       {/* Estimated Delivery */}
-      <Typography
-        sx={{
-          fontSize: 14,
-          color: '#666',
-          mb: 3,
-        }}
-      >
-        Estimated Delivery: Monday, Oct 28, 2023
-      </Typography>
+      {deliveryDate && (
+        <Typography
+          sx={{
+            fontSize: 14,
+            color: '#666',
+            mb: 3,
+          }}
+        >
+          Estimated Delivery: {deliveryDate}
+        </Typography>
+      )}
     </Box>
   );
 }
