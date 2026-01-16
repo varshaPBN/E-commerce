@@ -1,6 +1,6 @@
 import Head from 'next/head';
-import { Box, Container } from '@mui/material';
-import StoreSetupHeader from '@/components/store-setup/StoreSetupHeader';
+import { Box, Card, Typography, Alert } from '@mui/material';
+import BackButton from '@/components/common/BackButton';
 import AvatarUpload from '@/components/store-setup/AvatarUpload';
 import DecorativeImages from '@/components/store-setup/DecorativeImages';
 import StoreSetupForm from '@/components/store-setup/StoreSetupForm';
@@ -8,9 +8,23 @@ import { useState } from 'react';
 
 export default function StoreSetup() {
   const [avatar, setAvatar] = useState(null);
+  const [avatarError, setAvatarError] = useState('');
+  
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type - only JPG and PNG allowed
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const isValidType = allowedTypes.includes(file.type) || ['jpg', 'jpeg', 'png'].includes(fileExtension);
+      
+      if (!isValidType) {
+        setAvatarError('Please upload only JPG or PNG files.');
+        e.target.value = ''; // Reset file input
+        return;
+      }
+      
+      setAvatarError('');
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result); // base64 data URL
@@ -19,6 +33,7 @@ export default function StoreSetup() {
       reader.readAsDataURL(file);
     }
   };
+  
   return (
     <>
       <Head>
@@ -27,62 +42,96 @@ export default function StoreSetup() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Box
-        sx={{
-          minHeight: '100vh',
-          width: '100%',
-          backgroundColor: '#FDF8F2',
-        }}
-      >
-        <StoreSetupHeader />
-        <Container maxWidth="lg">
+      <Box sx={{ minHeight: "100vh", p: 4 }}>
+        {/* HEADER */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            px: 6,
+            mb: 2,
+          }}
+        >
+          {/* Logo */}
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="Artloom Logo"
+            sx={{
+              height: "60px",
+              cursor: "pointer",
+            }} />
+
+          <Typography fontSize={14} color="text.secondary">
+            Need Help?
+          </Typography>
+        </Box>
+
+        {/* BACK BUTTON */}
+        <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+          <BackButton fallbackPath="/" noBottomMargin={true} compact={true} />
+        </Box>
+
+        {/* MAIN CARD */}
+        <Card
+          sx={{
+            maxWidth: 1000,
+            mx: "auto",
+            display: "flex",
+            borderRadius: 6,
+            boxShadow: "0 50px 90px rgba(0,0,0,0.3)",
+            overflow: "hidden",
+          }}
+        >
+          {/* LEFT PANEL */}
           <Box
             sx={{
-              backgroundColor: '#F5F5DC',
-              borderRadius: '24px',
-              boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
-              mt: 4,
-              mb: 4,
-              overflow: { xs: 'auto', lg: 'hidden' },
-              minHeight: '600px',
+              width: "45%",
+              bgcolor: "#F4ECDF",
+              p: 4,
+              display: { xs: "none", lg: "flex" },
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
             }}
           >
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-                gap: 4,
-                p: { xs: 3, md: 6 },
-                overflow: 'visible',
+            <Box 
+              sx={{ 
+                position: "relative",
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 4,
               }}
             >
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: { xs: 'center', lg: 'flex-start' },
-                }}
-              >
-                <AvatarUpload onChange={handleAvatarChange} avatar={avatar}/>
-                <DecorativeImages />
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  zIndex: 10,
-                  overflow: 'visible',
-                  pointerEvents: 'auto',
-                }}
-              >
-                <StoreSetupForm avatar={avatar}/>
-              </Box>
+              <AvatarUpload onChange={handleAvatarChange} avatar={avatar}/>
+              {avatarError && (
+                <Alert severity="error" sx={{ mt: 2, width: '100%', maxWidth: 300 }}>
+                  {avatarError}
+                </Alert>
+              )}
+              <DecorativeImages />
             </Box>
           </Box>
-        </Container>
+
+          {/* RIGHT PANEL */}
+          <Box sx={{ width: { xs: "100%", lg: "55%" }, p: 6 }}>
+            {/* Show avatar upload on mobile since left panel is hidden */}
+            <Box sx={{ display: { xs: "flex", lg: "none" }, flexDirection: "column", alignItems: "center", mb: 4 }}>
+              <AvatarUpload onChange={handleAvatarChange} avatar={avatar}/>
+              {avatarError && (
+                <Alert severity="error" sx={{ mt: 2, width: '100%', maxWidth: 300 }}>
+                  {avatarError}
+                </Alert>
+              )}
+            </Box>
+            <StoreSetupForm avatar={avatar}/>
+          </Box>
+        </Card>
       </Box>
     </>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Select, MenuItem, FormControl, Button, TextField } from '@mui/material';
+import { Box, Typography, Select, MenuItem, FormControl, Button, TextField, Alert } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import axios from 'axios';
 
@@ -17,6 +17,7 @@ export default function ProductDetailsPanel() {
   const [selectedSize, setSelectedSize] = useState([]);
   const [designFile, setDesignFile] = useState(null);
   const [designPreview, setDesignPreview] = useState(null);
+  const [designError, setDesignError] = useState('');
   const [category, setCategory] = useState('Tshirt');
   const fileInputRef = useRef(null);
   const categoryRestoredRef = useRef(false); // Track if category has been restored from localStorage
@@ -317,6 +318,20 @@ export default function ProductDetailsPanel() {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type - only JPG and PNG allowed
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const isValidType = allowedTypes.includes(file.type) || ['jpg', 'jpeg', 'png'].includes(fileExtension);
+      
+      if (!isValidType) {
+        setDesignError('Please upload only JPG or PNG files.');
+        setDesignFile(null);
+        setDesignPreview(null);
+        e.target.value = ''; // Reset file input
+        return;
+      }
+      
+      setDesignError('');
       setDesignFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -645,7 +660,7 @@ export default function ProductDetailsPanel() {
         <Box
           component="input"
           type="file"
-          accept="image/png,image/jpeg,image/svg+xml"
+          accept="image/png,image/jpeg,image/jpg"
           sx={{ display: 'none' }}
           id="design-upload"
           ref={fileInputRef}
@@ -729,6 +744,11 @@ export default function ProductDetailsPanel() {
             </>
           )}
         </Box>
+        {designError && (
+          <Alert severity="error" sx={{ mt: 1 }}>
+            {designError}
+          </Alert>
+        )}
       </Box>
     </Box>
   );
