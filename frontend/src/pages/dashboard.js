@@ -114,12 +114,12 @@ export default function Dashboard() {
           }));
         }
       } catch (error) {
+        console.error('Error fetching dashboard data:', error);
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           window.location.href = '/login-page';
           return;
         }
-        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
@@ -148,7 +148,7 @@ export default function Dashboard() {
           backgroundColor: '#FAFAFA',
         }}
       >
-        <DashboardHeader />
+        <DashboardHeader artistInfo={artistInfo} />
         <DashboardGreeting artist={artistInfo?.name || 'Artist'} />
 
 

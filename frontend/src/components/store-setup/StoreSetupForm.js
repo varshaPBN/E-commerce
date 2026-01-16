@@ -60,21 +60,30 @@ export default function StoreSetupForm({avatar}) {
         avatar: avatar || ''
       };
 
-      // Make API call
-      const response = await axios.post('/api/v1/artist/signup/profile', profileData);
+      // Make API call with token for authentication
+      const response = await axios.post('/api/v1/artist/signup/profile', profileData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (response.status === 200) {
-        // Navigate to dashboard after successful submission
-        if (isRouterReady) {
-          router.push('/dashboard').then(() => {
-            console.log('Navigation successful');
-          }).catch((error) => {
-            console.error('Router navigation failed:', error);
+        console.log('Store setup completed successfully');
+        // Small delay to ensure backend has processed the update
+        setTimeout(() => {
+          // Navigate to dashboard after successful submission
+          if (isRouterReady) {
+            router.push('/dashboard').then(() => {
+              console.log('Navigation successful');
+            }).catch((error) => {
+              console.error('Router navigation failed:', error);
+              window.location.href = '/dashboard';
+            });
+          } else {
             window.location.href = '/dashboard';
-          });
-        } else {
-          window.location.href = '/dashboard';
-        }
+          }
+        }, 500); // 500ms delay
       } else {
         setError(response.data.message || 'Failed to save profile');
       }

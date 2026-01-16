@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const userAuth = require("../middleware/userAuth");
-const Products = mongoose.model("products")
+const Products = mongoose.model("products");
 
 
 module.exports = (app) => {
@@ -84,22 +84,33 @@ module.exports = (app) => {
   });
 
   //product view
-   app.get("/api/v1/artist/products/view", userAuth, async (req, res) => {
-    console.log("Logged in artist id:", req.user.id);
+  app.get("/api/v1/artist/products/view", userAuth, async (req, res) => {
     try {
-    const products = await Products.find({
-      artistId: req.user.id
-    });
+      console.log("Logged in artist id:", req.user.id);
+      
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ 
+          message: "Unauthorized - User not authenticated" 
+        });
+      }
 
-    res.status(200).json({
-      message: "My products fetched successfully",
-      products
-    });
+      const products = await Products.find({
+        artistId: req.user.id
+      });
+
+      res.status(200).json({
+        message: "My products fetched successfully",
+        products: products || []
+      });
     } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+      console.error("Error fetching products:", error);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ 
+        message: "Failed to fetch products",
+        error: error.message 
+      });
     }
-});
+  });
   //product delete
     app.delete("/api/v1/artist/products/:productId", userAuth, async (req, res) => {
   try {

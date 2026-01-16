@@ -117,7 +117,6 @@ export default function ProductCreation() {
     if (Array.isArray(sizes)) {
       return sizes.map(size => mapSize(size));
     }
-    // Fallback for single size (backward compatibility)
     return [mapSize(sizes)];
   };
   
