@@ -1,8 +1,7 @@
 import Head from 'next/head';
-import { Box, Card, Typography, Alert } from '@mui/material';
+import { Box, Card, Typography, Alert, Link } from '@mui/material';
 import BackButton from '@/components/common/BackButton';
 import AvatarUpload from '@/components/store-setup/AvatarUpload';
-import DecorativeImages from '@/components/store-setup/DecorativeImages';
 import StoreSetupForm from '@/components/store-setup/StoreSetupForm';
 import { useState } from 'react';
 
@@ -63,13 +62,21 @@ export default function StoreSetup() {
               cursor: "pointer",
             }} />
 
-          <Typography fontSize={14} color="text.secondary">
+          <Link
+            href="/help"
+            sx={{
+              fontSize: 14,
+              color: 'text.secondary',
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+          >
             Need Help?
-          </Typography>
+          </Link>
         </Box>
 
         {/* BACK BUTTON */}
-        <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+        <Box sx={{ maxWidth: 1000, mx: "auto", mb: 1 }}>
           <BackButton fallbackPath="/" noBottomMargin={true} compact={true} />
         </Box>
 
@@ -82,6 +89,7 @@ export default function StoreSetup() {
             borderRadius: 6,
             boxShadow: "0 50px 90px rgba(0,0,0,0.3)",
             overflow: "hidden",
+            mt: -2,
           }}
         >
           {/* LEFT PANEL */}
@@ -114,7 +122,21 @@ export default function StoreSetup() {
                   {avatarError}
                 </Alert>
               )}
-              <DecorativeImages />
+              <Box
+                component="img"
+                src="/store-setup.avif"
+                alt="Store Setup"
+                sx={{
+                  borderRadius: 4,
+                  maxWidth: "100%",
+                  maxHeight: 550,
+                  width: "auto",
+                  height: "auto",
+                  objectFit: "contain",
+                  display: "block",
+                  mt: 2,
+                }}
+              />
             </Box>
           </Box>
 

@@ -5,6 +5,7 @@ import {
   CardContent,
   TextField,
   Typography,
+  Link,
 } from "@mui/material";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -110,9 +111,17 @@ export default function Login() {
             cursor: "pointer",
           }} />
 
-        <Typography fontSize={14} color="text.secondary">
+        <Link
+          href="/help"
+          sx={{
+            fontSize: 14,
+            color: 'text.secondary',
+            textDecoration: 'none',
+            '&:hover': { textDecoration: 'underline' },
+          }}
+        >
           Need Help?
-        </Typography>
+        </Link>
       </Box>
 
       {/* BACK BUTTON */}

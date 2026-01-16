@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { Box, Card, Typography } from '@mui/material';
+import { Box, Card, Typography, Link } from '@mui/material';
 import SignUpForm from '@/components/signup/SignUpForm';
 import BackButton from '@/components/common/BackButton';
 
@@ -33,9 +33,17 @@ export default function SignUp() {
               cursor: "pointer",
             }} />
 
-          <Typography fontSize={14} color="text.secondary">
+          <Link
+            href="/help"
+            sx={{
+              fontSize: 14,
+              color: 'text.secondary',
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+          >
             Need Help?
-          </Typography>
+          </Link>
         </Box>
 
         {/* BACK BUTTON */}

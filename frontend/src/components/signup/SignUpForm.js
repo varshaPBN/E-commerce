@@ -119,7 +119,7 @@ export default function SignUpForm() {
       <Typography sx={{ fontSize: 14, color: 'text.secondary', mb: 4, maxWidth: 420 }}>
         Already have an account?{' '}
         <Link
-          href="/login"
+          href="/login-page"
           sx={{
             color: 'text.primary',
             textDecoration: 'none',
