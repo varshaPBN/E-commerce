@@ -308,26 +308,4 @@ module.exports = (app) => {
     }
   });
 
-  // Get artist profile info
-  app.get("/api/v1/artist/profile", userAuth, async (req, res) => {
-    try {
-      console.log("Profile request - User ID:", req.user?.id);
-      const artist = await Artists.findById(req.user.id);
-      if (!artist) {
-        console.error("Artist not found for ID:", req.user.id);
-        return res.status(404).json({ message: "Artist not found" });
-      }
-      res.status(200).json({ 
-        message: "Artist profile fetched successfully", 
-        artist 
-      });
-    } catch (error) {
-      console.error("Profile endpoint error:", error);
-      console.error("Error stack:", error.stack);
-      res.status(500).json({ 
-        message: error.message,
-        error: error.toString()
-      });
-    }
-  });
 };

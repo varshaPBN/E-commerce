@@ -83,7 +83,7 @@ export default function AvatarUpload({ onChange, avatar }) {
           },
         }}
       >
-        <EditIcon sx={{ color: '#FFFFFF', fontSize: { xs: 14, md: 16 } }} />
+        {/* <EditIcon sx={{ color: '#FFFFFF', fontSize: { xs: 14, md: 16 } }} /> */}
       </Box>
       <Typography sx={{ fontSize: { xs: 10, md: 11 }, color: '#666', mt: 1, textAlign: 'center' }}>
         Min 400 x 400 px. PNG or JPG.

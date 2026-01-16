@@ -1,8 +1,58 @@
-import React from 'react';
-import { Box, Typography, Avatar } from '@mui/material';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import React, { useState } from 'react';
+import { Box, Typography, Avatar, Menu, MenuItem } from '@mui/material';
+import { useRouter } from 'next/router';
 
-export default function DashboardHeader() {
+export default function DashboardHeader({ artistInfo }) {
+  const router = useRouter();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+
+  // Get avatar from artistInfo, fallback to placeholder or initials
+  const getAvatarSrc = () => {
+    // Check if avatar exists and is not empty
+    if (artistInfo?.avatar && artistInfo.avatar.trim() !== '') {
+      return artistInfo.avatar;
+    }
+    return null; // Will show initials if no avatar
+  };
+
+  // Get initials for fallback
+  const getInitials = () => {
+    if (artistInfo?.name) {
+      const names = artistInfo.name.trim().split(' ');
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+      }
+      return names[0][0].toUpperCase();
+    }
+    return 'A'; // Default initial
+  };
+
+  // Get background color for avatar based on name
+  const getAvatarColor = () => {
+    if (artistInfo?.name) {
+      const colors = ['#FFB6C1', '#B19CD9', '#87CEEB', '#98D8C8', '#F7DC6F', '#F8B88B'];
+      const index = artistInfo.name.charCodeAt(0) % colors.length;
+      return colors[index];
+    }
+    return '#FFB6C1'; // Default pink
+  };
+
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('productCreationData');
+    handleMenuClose();
+    router.push('/');
+  };
   return (
     <Box
       sx={{
@@ -15,21 +65,6 @@ export default function DashboardHeader() {
         backgroundColor: '#FFFFFF',
       }}
     >
-      {/* Logo */}
-      {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AutoAwesomeIcon sx={{ color: '#9C27B0', fontSize: 28 }} />
-        <Typography
-          sx={{
-            fontFamily: "'Playfair Display'",
-            fontSize: { xs: 20, md: 24 },
-            fontWeight: 700,
-            color: '#3B2A1A',
-          }}
-        >
-          Artloom
-        </Typography>
-      </Box> */}
-
       <Box
         component="img"
         src="/logo.png"
@@ -49,12 +84,19 @@ export default function DashboardHeader() {
         }}
       >
         <Typography
+          onClick={() => {
+            router.push('/dashboard').catch(() => {
+              window.location.href = '/dashboard';
+            });
+          }}
           sx={{
             fontSize: 16,
             fontWeight: 600,
             color: '#3B2A1A',
             borderBottom: '2px solid #3B2A1A',
             pb: 0.5,
+            cursor: 'pointer',
+            '&:hover': { color: '#2A1F15' },
           }}
         >
           Dashboard
@@ -71,6 +113,10 @@ export default function DashboardHeader() {
           Products
         </Typography>
         <Typography
+          onClick={() => {
+            localStorage.removeItem('productCreationData');
+            router.push('/product-creation?fresh=true');
+          }}
           sx={{
             fontSize: 16,
             fontWeight: 400,
@@ -95,15 +141,39 @@ export default function DashboardHeader() {
       </Box>
 
       {/* Profile */}
-      <Avatar
-        src="https://via.placeholder.com/40x40/FFB6C1/FFFFFF?text=K"
-        alt="Profile"
-        sx={{
-          width: { xs: 36, md: 40 },
-          height: { xs: 36, md: 40 },
-          cursor: 'pointer',
-        }}
-      />
+      <Box>
+        <Avatar
+          onClick={handleAvatarClick}
+          src={getAvatarSrc()}
+          alt={artistInfo?.name || 'Profile'}
+          sx={{
+            width: { xs: 36, md: 40 },
+            height: { xs: 36, md: 40 },
+            cursor: 'pointer',
+            backgroundColor: getAvatarColor(),
+            color: '#FFFFFF',
+            fontWeight: 600,
+            fontSize: { xs: 14, md: 16 },
+          }}
+        >
+          {!getAvatarSrc() && getInitials()}
+        </Avatar>
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleMenuClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+        >
+          <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+        </Menu>
+      </Box>
     </Box>
   );
 }

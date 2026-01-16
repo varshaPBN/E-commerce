@@ -5,7 +5,7 @@ require("dotenv").config(); // Load environment variables. Make sure .env is in 
 const imageRoutes = require("./routes/imageRoutes"); //AWS Dynamic loading
 const port = process.env.PORT || 5001;
 const s3 = require("./config/s3");
-const upload = require("./config/multer"); // ← import your multer-s3 config
+const upload = require("./config/multer"); 
 
 const { ListObjectsV2Command } = require("@aws-sdk/client-s3"); //aws
 
