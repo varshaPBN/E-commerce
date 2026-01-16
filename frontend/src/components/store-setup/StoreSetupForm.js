@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Box, TextField, Button, Typography } from '@mui/material';
+import { Box, TextField, Button, Typography, Alert } from '@mui/material';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import axios from 'axios';
 
@@ -12,6 +12,7 @@ export default function StoreSetupForm({avatar}) {
   const [logo, setLogo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [logoError, setLogoError] = useState('');
   
   // Check if router is ready
   const isRouterReady = router.isReady !== false;
@@ -19,6 +20,18 @@ export default function StoreSetupForm({avatar}) {
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type - only JPG and PNG allowed
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const isValidType = allowedTypes.includes(file.type) || ['jpg', 'jpeg', 'png'].includes(fileExtension);
+      
+      if (!isValidType) {
+        setLogoError('Please upload only JPG or PNG files.');
+        e.target.value = ''; // Reset file input
+        return;
+      }
+      
+      setLogoError('');
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogo(reader.result); // base64 data URL
@@ -211,7 +224,7 @@ export default function StoreSetupForm({avatar}) {
         <Box
           component="input"
           type="file"
-          accept="image/png,image/jpeg"
+          accept="image/png,image/jpeg,image/jpg"
           sx={{ display: 'none' }}
           id="logo-upload"
           onChange={handleLogoChange}
@@ -260,11 +273,16 @@ export default function StoreSetupForm({avatar}) {
                 Upload a file or drag and drop.
               </Typography>
               <Typography sx={{ fontSize: { xs: 11, md: 12 }, color: '#999', mt: 0.5 }}>
-                PNG, JPG and up to 10MB.
+                PNG, JPG only. Up to 10MB.
               </Typography>
             </>
           )}
         </Box>
+        {logoError && (
+          <Alert severity="error" sx={{ mt: 1 }}>
+            {logoError}
+          </Alert>
+        )}
       </Box>
 
       <Box sx={{ position: 'relative', zIndex: 100, pointerEvents: 'auto', mt: 2 }}>
